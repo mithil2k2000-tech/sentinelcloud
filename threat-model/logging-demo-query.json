@@ -1,0 +1,14 @@
+[
+  {
+    "event_id": "evt-707",
+    "timestamp": "2026-09-17T01:22:10Z",
+    "event_type": "iam_change",
+    "principal": "k.doran",
+    "source_ip": "185.220.101.4",
+    "target": "secrets-manager-role",
+    "outcome": "success",
+    "region": null,
+    "bytes_transferred": null,
+    "ingested_from": "../threat-model/logs/logs-multi-stage-incident.json"
+  }
+]

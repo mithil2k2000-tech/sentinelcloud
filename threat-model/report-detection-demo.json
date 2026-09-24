@@ -1,0 +1,74 @@
+{
+  "source": "../threat-model/logs/logs-multi-stage-incident.json",
+  "event_count": 9,
+  "summary": {
+    "overall_risk": "CRITICAL",
+    "counts": {
+      "LOW": 0,
+      "MEDIUM": 0,
+      "HIGH": 1,
+      "CRITICAL": 3
+    },
+    "fail_on": "HIGH",
+    "status": "INCIDENT"
+  },
+  "alerts": [
+    {
+      "rule_id": "DET-BRUTEFORCE-01",
+      "category": "Spoofing",
+      "severity": "CRITICAL",
+      "events": [
+        "evt-701",
+        "evt-702",
+        "evt-703",
+        "evt-704",
+        "evt-705",
+        "evt-706"
+      ],
+      "alert": "5 failed logins for k.doran from 185.220.101.4, followed by a success",
+      "behavior": "5 consecutive authentication failures for k.doran from 185.220.101.4, then a successful login from the same IP \u2014 consistent with a guessed or stuffed credential that worked.",
+      "impact": "Likely account takeover \u2014 treat the account as compromised until verified otherwise.",
+      "recommended_action": "Force a password/credential reset, review MFA status, and rate-limit or block the source IP.",
+      "status": "OPEN"
+    },
+    {
+      "rule_id": "DET-EXFIL-01",
+      "category": "Information Disclosure",
+      "severity": "CRITICAL",
+      "events": [
+        "evt-708"
+      ],
+      "alert": "k.doran transferred 950 MB from customer-storage",
+      "behavior": "k.doran moved 950 MB out of customer-storage in a single transfer at 2026-09-17T01:31:47Z \u2014 well above the 500 MB baseline for normal activity.",
+      "impact": "Large single-transfer volumes from a sensitive store are the single strongest signal of bulk data exfiltration, insider or external.",
+      "recommended_action": "Suspend k.doran's active sessions pending review, and confirm the transfer against a known, approved business process.",
+      "status": "OPEN"
+    },
+    {
+      "rule_id": "DET-LOGTAMPER-01",
+      "category": "Repudiation",
+      "severity": "CRITICAL",
+      "events": [
+        "evt-709"
+      ],
+      "alert": "k.doran disabled audit logging on log-workspace",
+      "behavior": "k.doran disabled logging on log-workspace at 2026-09-17T01:40:02Z.",
+      "impact": "Tampering with the audit trail is a near-universal signal of an active, deliberate attack \u2014 it removes the evidence needed to investigate everything else.",
+      "recommended_action": "Treat as an active incident immediately: re-enable/restore logging, isolate k.doran's credentials, and escalate \u2014 do not wait for corroborating alerts.",
+      "status": "OPEN"
+    },
+    {
+      "rule_id": "DET-PRIVESC-01",
+      "category": "Elevation of Privilege",
+      "severity": "HIGH",
+      "events": [
+        "evt-707"
+      ],
+      "alert": "After-hours privilege change by k.doran on secrets-manager-role",
+      "behavior": "k.doran granted/changed permissions on secrets-manager-role at 2026-09-17T01:22:10Z (outside 06:00-22:00 UTC business hours).",
+      "impact": "Off-hours IAM changes to sensitive resources are a common early step in both insider misuse and post-compromise privilege escalation.",
+      "recommended_action": "Confirm this change against an approved change ticket; if none exists, revert it and investigate k.doran.",
+      "status": "OPEN"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "manifests_dir": "../kubernetes/manifests/hardened",
+  "summary": {
+    "overall_risk": "NONE",
+    "counts": {
+      "LOW": 0,
+      "MEDIUM": 0,
+      "HIGH": 0,
+      "CRITICAL": 0
+    },
+    "fail_on": "HIGH",
+    "deployment": "ALLOWED"
+  },
+  "findings": [],
+  "compliance": []
+}

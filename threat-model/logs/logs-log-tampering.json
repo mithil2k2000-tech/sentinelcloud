@@ -1,0 +1,5 @@
+{
+  "events": [
+    { "event_id": "evt-601", "timestamp": "2026-09-16T04:03:00Z", "event_type": "logging_disabled", "principal": "unknown-admin", "source_ip": "45.83.12.90", "target": "log-workspace", "outcome": "success" }
+  ]
+}

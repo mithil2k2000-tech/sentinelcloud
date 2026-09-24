@@ -1,0 +1,237 @@
+# Control-to-framework mapping — FR-8 in the SentinelCloud v1 spec (§16
+# development table, item 5; also referenced in §12 as "Layer C" and in an
+# earlier draft as "Phase 8").
+#
+# REFERENCE ONLY. This file exists so an engineer can trace an internal
+# control_id to a recognized framework's own numbering for discussion and
+# documentation purposes. It is NOT a certification, an audit result, or a
+# claim that Meridian Trust Bank (a fictional reference customer — see
+# docs/) or SentinelCloud itself is compliant with any of these
+# frameworks. Every consumer of this data (agent/compliance.py,
+# analyze.py --compliance, k8s_scan.py --compliance) is required to render
+# each mapping with an explicit "(reference only, not a certification)"
+# label — see SR-6 in the v1 spec and tests/test_compliance.py's
+# test_render_mapping_always_includes_reference_only_label.
+#
+# The three frameworks below were picked because they're free to read
+# without a paid membership (unlike some ISO standards) and because the
+# spec's own FR-8/Layer C text names CIS Controls and NIST CSF explicitly
+# as examples; PCI DSS was added because the reference scenario is
+# explicitly a bank handling payment card flows (payment-service).
+# Mappings were selected by hand against each control's actual intent —
+# not machine-generated, not independently reviewed by a compliance
+# professional, and not guaranteed to be the single "correct" mapping a
+# real audit would use. Several controls (especially the Kubernetes ones,
+# K8S-001 through K8S-008) map to general secure-configuration or
+# access-control language in these frameworks rather than a
+# container-specific clause, because none of the three named frameworks
+# has first-class Kubernetes-specific controls — see
+# docs/compliance-mapping.md for the honest limitations this creates.
+#
+# Extended in Phase 7 (drift detection, FR-9) with one further entry,
+# DRIFT-001, for the two agent/drift.py rules (asset appeared/disappeared
+# between snapshots) that have no equivalent design-time control in
+# threat_engine.py or k8s_engine.py to reuse — every other drift rule
+# reuses an existing control_id from Phase 3/5 (see agent/drift.py's own
+# module docstring for why). 15 entries total as of Phase 7.
+#
+# Frameworks referenced:
+#   cis_v8       — CIS Critical Security Controls, Version 8
+#   nist_csf_2   — NIST Cybersecurity Framework 2.0
+#   pci_dss_v4   — PCI Data Security Standard, Version 4.0
+
+mappings:
+  IAM-004:
+    description: "Least-privilege identity scoping and network segmentation (reused by IAM-BROAD-01/02, IAM-MISSING-01, and NET-SEGMENT-01 in threat_engine.py — see the note on shared control_ids below)"
+    frameworks:
+      cis_v8:
+        control: "6.8"
+        title: "Define and Maintain Role-Based Access Control"
+      nist_csf_2:
+        control: "PR.AA-05"
+        title: "Access permissions, entitlements, and authorizations are defined in a policy, managed, enforced, and reviewed, and incorporate the principles of least privilege and separation of duties"
+      pci_dss_v4:
+        control: "7.2.1"
+        title: "An access control model is defined and includes appropriate assignment of privileges based on job classification and function, least privileges, and need to know"
+
+  NET-001:
+    description: "No public network exposure of a sensitive resource (NET-PUBLIC-01/02)"
+    frameworks:
+      cis_v8:
+        control: "12.2"
+        title: "Establish and Maintain a Secure Network Architecture"
+      nist_csf_2:
+        control: "PR.IR-01"
+        title: "Networks and environments are protected from unauthorized logical access and usage"
+      pci_dss_v4:
+        control: "1.4.1"
+        title: "Network Security Controls between trusted and untrusted networks are implemented"
+
+  DATA-002:
+    description: "Encryption at rest for sensitive data stores (DATA-ENC-01)"
+    frameworks:
+      cis_v8:
+        control: "3.11"
+        title: "Encrypt Sensitive Data at Rest"
+      nist_csf_2:
+        control: "PR.DS-01"
+        title: "The confidentiality, integrity, and availability of data-at-rest are protected"
+      pci_dss_v4:
+        control: "3.5.1"
+        title: "Primary account number (PAN) is rendered unreadable anywhere it is stored"
+
+  ZT-001:
+    description: "Application-layer authentication / mutual TLS between services (AUTHN-FLOW-01)"
+    frameworks:
+      cis_v8:
+        control: "3.10"
+        title: "Encrypt Sensitive Data in Transit"
+      nist_csf_2:
+        control: "PR.AA-03"
+        title: "Users, services, and hardware are authenticated commensurate with the risk of the transaction"
+      pci_dss_v4:
+        control: "4.2.1"
+        title: "Strong cryptography and security protocols are implemented to safeguard PAN during transmission"
+
+  NET-003:
+    description: "WAF / rate-limiting in front of an internet-facing gateway (NET-WAF-01)"
+    frameworks:
+      cis_v8:
+        control: "13.10"
+        title: "Perform Application Layer Filtering"
+      nist_csf_2:
+        control: "PR.IR-01"
+        title: "Networks and environments are protected from unauthorized logical access and usage"
+      pci_dss_v4:
+        control: "6.4.2"
+        title: "An automated technical solution (e.g. a WAF) is deployed to detect and prevent web-based attacks"
+
+  LOG-001:
+    description: "Centralized audit logging (LOG-001)"
+    frameworks:
+      cis_v8:
+        control: "8.5"
+        title: "Collect Detailed Audit Logs"
+      nist_csf_2:
+        control: "PR.PS-04"
+        title: "Log records are generated and made available for continuous monitoring"
+      pci_dss_v4:
+        control: "10.2.1"
+        title: "Audit logs are enabled and active for all system components and cardholder data"
+
+  K8S-001:
+    description: "Privileged container (K8S-PRIV-01)"
+    frameworks:
+      cis_v8:
+        control: "4.1"
+        title: "Establish and Maintain a Secure Configuration Process"
+      nist_csf_2:
+        control: "PR.PS-01"
+        title: "Configuration management practices are established and applied"
+      pci_dss_v4:
+        control: "2.2.1"
+        title: "Configuration standards are developed, implemented, and maintained for all system components"
+
+  K8S-002:
+    description: "Host network/PID/IPC namespace sharing (K8S-HOSTNS-01)"
+    frameworks:
+      cis_v8:
+        control: "4.1"
+        title: "Establish and Maintain a Secure Configuration Process"
+      nist_csf_2:
+        control: "PR.PS-01"
+        title: "Configuration management practices are established and applied"
+      pci_dss_v4:
+        control: "2.2.1"
+        title: "Configuration standards are developed, implemented, and maintained for all system components"
+
+  K8S-003:
+    description: "Container not enforcing runAsNonRoot (K8S-ROOT-01)"
+    frameworks:
+      cis_v8:
+        control: "5.4"
+        title: "Restrict Administrator Privileges to Dedicated Administrator Accounts"
+      nist_csf_2:
+        control: "PR.AA-05"
+        title: "Access permissions, entitlements, and authorizations are defined in a policy, managed, enforced, and reviewed, and incorporate the principles of least privilege and separation of duties"
+      pci_dss_v4:
+        control: "7.2.1"
+        title: "An access control model is defined and includes appropriate assignment of privileges based on job classification and function, least privileges, and need to know"
+
+  K8S-004:
+    description: "Linux capabilities not dropped, or a dangerous one re-added (K8S-CAP-01)"
+    frameworks:
+      cis_v8:
+        control: "4.1"
+        title: "Establish and Maintain a Secure Configuration Process"
+      nist_csf_2:
+        control: "PR.PS-01"
+        title: "Configuration management practices are established and applied"
+      pci_dss_v4:
+        control: "2.2.1"
+        title: "Configuration standards are developed, implemented, and maintained for all system components"
+
+  K8S-005:
+    description: "Wildcard Role/ClusterRole (K8S-RBAC-01)"
+    frameworks:
+      cis_v8:
+        control: "6.8"
+        title: "Define and Maintain Role-Based Access Control"
+      nist_csf_2:
+        control: "PR.AA-05"
+        title: "Access permissions, entitlements, and authorizations are defined in a policy, managed, enforced, and reviewed, and incorporate the principles of least privilege and separation of duties"
+      pci_dss_v4:
+        control: "7.2.1"
+        title: "An access control model is defined and includes appropriate assignment of privileges based on job classification and function, least privileges, and need to know"
+
+  K8S-006:
+    description: "Namespace with workloads but no NetworkPolicy (K8S-NETPOL-01)"
+    frameworks:
+      cis_v8:
+        control: "13.4"
+        title: "Perform Traffic Filtering Between Network Segments"
+      nist_csf_2:
+        control: "PR.IR-01"
+        title: "Networks and environments are protected from unauthorized logical access and usage"
+      pci_dss_v4:
+        control: "1.4.1"
+        title: "Network Security Controls between trusted and untrusted networks are implemented"
+
+  K8S-007:
+    description: "Missing CPU/memory resource limits (K8S-RESOURCE-01) — see docs/compliance-mapping.md for why this is the weakest mapping in this file"
+    frameworks:
+      cis_v8:
+        control: "4.1"
+        title: "Establish and Maintain a Secure Configuration Process"
+      nist_csf_2:
+        control: "PR.PS-01"
+        title: "Configuration management practices are established and applied"
+      pci_dss_v4:
+        control: "2.2.1"
+        title: "Configuration standards are developed, implemented, and maintained for all system components"
+
+  K8S-008:
+    description: "Mutable :latest / untagged image reference (K8S-IMAGE-01)"
+    frameworks:
+      cis_v8:
+        control: "16.11"
+        title: "Leverage Vetted Modules or Services for Application Security Components"
+      nist_csf_2:
+        control: "PR.PS-01"
+        title: "Configuration management practices are established and applied"
+      pci_dss_v4:
+        control: "6.3.2"
+        title: "An inventory of bespoke and custom software is maintained"
+
+  DRIFT-001:
+    description: "An asset appeared in, or disappeared from, the live environment with no corresponding baseline change (DRIFT-ASSET-ADDED-01 / DRIFT-ASSET-REMOVED-01 in agent/drift.py, Phase 7). No equivalent design-time control exists in threat_engine.py or k8s_engine.py for this — it's specific to comparing two snapshots over time, not inspecting one — so this is the one control_id in this file that isn't reused from an earlier phase."
+    frameworks:
+      cis_v8:
+        control: "1.1"
+        title: "Establish and Maintain Detailed Enterprise Asset Inventory"
+      nist_csf_2:
+        control: "DE.CM-09"
+        title: "Computing hardware and software, runtime environments, and their data are monitored to find potentially adverse events"
+      pci_dss_v4:
+        control: "12.5.2"
+        title: "PCI DSS scope is documented and confirmed to be accurate, with inventory of system components updated as part of that process"

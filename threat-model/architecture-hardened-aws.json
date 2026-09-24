@@ -1,0 +1,180 @@
+{
+  "name": "Mobile Banking App \u2014 as implemented in terraform/aws (Phase 1 scaffold)",
+  "assets": [
+    {
+      "id": "mobile-app",
+      "type": "client",
+      "subnet": "internet",
+      "sensitivity": "low",
+      "internet_facing": true
+    },
+    {
+      "id": "api-gateway",
+      "type": "gateway",
+      "subnet": "gateway",
+      "sensitivity": "medium",
+      "internet_facing": true,
+      "waf_enabled": false
+    },
+    {
+      "id": "payment-service",
+      "type": "compute",
+      "subnet": "eks",
+      "sensitivity": "high"
+    },
+    {
+      "id": "account-service",
+      "type": "compute",
+      "subnet": "eks",
+      "sensitivity": "high"
+    },
+    {
+      "id": "notification-service",
+      "type": "compute",
+      "subnet": "eks",
+      "sensitivity": "low"
+    },
+    {
+      "id": "secrets-manager",
+      "type": "secret-store",
+      "subnet": "data",
+      "sensitivity": "critical",
+      "public_network_access": false,
+      "encrypted_at_rest": true
+    },
+    {
+      "id": "customer-storage",
+      "type": "storage",
+      "subnet": "data",
+      "sensitivity": "critical",
+      "public_network_access": false,
+      "allow_public_blob": false,
+      "encrypted_at_rest": true
+    },
+    {
+      "id": "log-workspace",
+      "type": "logging",
+      "subnet": "mgmt",
+      "sensitivity": "medium",
+      "public_network_access": false,
+      "encrypted_at_rest": true
+    }
+  ],
+  "trust_boundaries": [
+    {
+      "id": "internet",
+      "contains": [
+        "mobile-app"
+      ]
+    },
+    {
+      "id": "gateway",
+      "contains": [
+        "api-gateway"
+      ]
+    },
+    {
+      "id": "eks",
+      "contains": [
+        "payment-service",
+        "account-service",
+        "notification-service"
+      ]
+    },
+    {
+      "id": "data",
+      "contains": [
+        "secrets-manager",
+        "customer-storage"
+      ]
+    },
+    {
+      "id": "mgmt",
+      "contains": [
+        "log-workspace"
+      ]
+    }
+  ],
+  "flows": [
+    {
+      "from": "mobile-app",
+      "to": "api-gateway",
+      "protocol": "https",
+      "port": 443,
+      "authenticated": true
+    },
+    {
+      "from": "api-gateway",
+      "to": "payment-service",
+      "protocol": "https",
+      "port": 443,
+      "authenticated": true
+    },
+    {
+      "from": "api-gateway",
+      "to": "account-service",
+      "protocol": "https",
+      "port": 443,
+      "authenticated": true
+    },
+    {
+      "from": "api-gateway",
+      "to": "notification-service",
+      "protocol": "https",
+      "port": 443,
+      "authenticated": true
+    },
+    {
+      "from": "payment-service",
+      "to": "secrets-manager",
+      "protocol": "https",
+      "port": 443,
+      "authenticated": true
+    },
+    {
+      "from": "payment-service",
+      "to": "customer-storage",
+      "protocol": "https",
+      "port": 443,
+      "authenticated": true
+    },
+    {
+      "from": "account-service",
+      "to": "secrets-manager",
+      "protocol": "https",
+      "port": 443,
+      "authenticated": true
+    }
+  ],
+  "identity_bindings": [
+    {
+      "principal": "payment-service",
+      "role": "IAM-004-payment-service-data-access",
+      "scope": "resource"
+    },
+    {
+      "principal": "account-service",
+      "role": "IAM-004-account-service-secrets-access",
+      "scope": "resource"
+    },
+    {
+      "principal": "notification-service",
+      "role": null,
+      "scope": null
+    }
+  ],
+  "logging": {
+    "enabled": true,
+    "destination": "log-workspace",
+    "retention_days": 90,
+    "local_query_enabled": true
+  },
+  "_notes": [
+    "payment-service's IAM policy is scoped to the specific S3 bucket ARN via IRSA (modules/iam) \u2014 resource-level scope, same improvement as GCP's binding.",
+    "Security groups restrict the data-tier SG to traffic from the eks SG only (modules/network) \u2014 modeled here as trust-boundary separation.",
+    "AWS Config rules (modules/policy) catch public S3/unencrypted volumes/admin IAM policies as policy-as-code.",
+    "notification-service has no IAM role \u2014 it touches no sensitive data (no outgoing flow), so IAM-MISSING-01 correctly doesn't flag it; not fixed because nothing requires fixing.",
+    "Phase 9: modules/logging now wires a multi-region CloudTrail (log-workspace) \u2014 management events plus object-level data events on customer-storage \u2014 into an encrypted, versioned S3 bucket and a CloudWatch Log Group. Closes RR-01.",
+    "Phase 4 (Zero Trust, RR-02/RR-03/RR-04): account-service now has its own IRSA role, scoped to the one Secrets Manager secret via a dedicated policy (modules/iam) \u2014 closes RR-02, and its own SDK calls to Secrets Manager are now a real IAM-authenticated request, not just network reachability, closing RR-03. api-gateway -> service traffic is now mutually authenticated via a mesh-wide STRICT Istio PeerAuthentication (modules/mesh) \u2014 closes RR-04. See docs/phase4-zero-trust.md."
+  ]
+}

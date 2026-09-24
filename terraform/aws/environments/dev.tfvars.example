@@ -1,0 +1,13 @@
+project_name = "csp"
+environment  = "dev"
+region       = "eu-west-2"
+vpc_cidr     = "10.40.0.0/16"
+
+# Set to your actual admin/office IP range before applying. Never 0.0.0.0/0.
+allowed_admin_cidrs = ["203.0.113.0/29"]
+
+tags = {
+  project     = "cloud-security-platform"
+  environment = "dev"
+  managed-by  = "terraform"
+}

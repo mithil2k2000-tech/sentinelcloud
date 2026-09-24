@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SentinelCloud — Security Posture Dashboard</title>
+<style>
+  body { font-family: -apple-system, Segoe UI, Helvetica, Arial, sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1rem; color: #1b1b1b; background: #fff; }
+  h1 { font-size: 1.5rem; }
+  h2 { font-size: 1.1rem; border-bottom: 1px solid #ddd; padding-bottom: 0.3rem; margin-top: 2rem; }
+  h2 small { font-weight: normal; color: #666; font-size: 0.75rem; }
+  .banner { background: #fff3cd; border: 1px solid #997404; color: #664d03; padding: 0.75rem 1rem; border-radius: 4px; font-size: 0.9rem; }
+  table { border-collapse: collapse; width: 100%; margin-top: 0.5rem; }
+  th, td { text-align: left; padding: 0.4rem 0.6rem; border-bottom: 1px solid #eee; font-size: 0.9rem; }
+  th { background: #f7f7f7; }
+  .ok { color: #0f5132; font-weight: 600; }
+  .bad { color: #842029; font-weight: 600; }
+  .neutral { color: #666; font-style: italic; }
+  footer { margin-top: 2rem; font-size: 0.8rem; color: #888; }
+</style>
+</head>
+<body>
+  <h1>SentinelCloud — Security Posture Dashboard</h1>
+  <div class="banner">
+    Snapshot only, not live monitoring. Every number on this page was read from a JSON report an earlier CLI run
+    already produced (see docs/dashboard.md) — this page makes no new decision and reads nothing from a live cloud
+    account. Generated 2026-09-23 09:32 UTC.
+  </div>
+  
+    <section>
+      <h2>Cloud architecture threat-model gates</h2>
+      <table><thead><tr><th>Cloud</th><th>Deployment</th><th>CRIT</th><th>HIGH</th><th>MED</th><th>LOW</th></tr></thead>
+      <tbody><tr><td>Azure</td><td class='ok'>ALLOWED</td><td>0</td><td>0</td><td>2</td><td>0</td></tr><tr><td>GCP</td><td class='ok'>ALLOWED</td><td>0</td><td>0</td><td>1</td><td>0</td></tr><tr><td>AWS</td><td class='ok'>ALLOWED</td><td>0</td><td>0</td><td>1</td><td>0</td></tr></tbody></table>
+    </section><section><h2>Kubernetes manifest gate</h2><p>Hardened manifest set: <span class='ok'>ALLOWED</span> (CRIT=0 HIGH=0 MED=0 LOW=0)</p></section><section><h2>Compliance audit report</h2><p>4/6 in-scope controls PASS (as of 2026-09-18) <em>(reference only, not a certification)</em></p></section>
+    <section>
+      <h2>Attack path simulation <small>(reachability analysis, not a penetration test)</small></h2>
+      <table><tbody><tr><td>Naive proposal</td><td class='bad'>4/4 HIGH</td></tr><tr><td>Hardened baseline</td><td class='ok'>0/3 HIGH</td></tr></tbody></table>
+    </section><section><h2>Drift detection demo</h2><p><span class='bad'>BLOCKED</span> (CRIT=2 HIGH=3) — fixed demo fixture, not a live re-check</p></section><section><h2>Detection engine demo</h2><p><span class='bad'>INCIDENT</span> (CRIT=3 HIGH=1) — synthetic multi-stage incident fixture</p></section><section><h2>Agent evaluation harness</h2><p><span class='ok'>100%</span> pass rate (threshold 95%, 38/38 narrations) — deterministic template fallback without ANTHROPIC_API_KEY, not a live LLM quality score</p></section>
+  
+  <footer>SentinelCloud v1 — reference-only project for a fictional bank (Meridian Trust Bank). No compliance certification is implied by anything on this page (SR-6).</footer>
+</body>
+</html>

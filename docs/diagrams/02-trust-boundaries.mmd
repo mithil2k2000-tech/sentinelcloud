@@ -1,0 +1,34 @@
+flowchart TB
+    subgraph INTERNET["Trust boundary: internet"]
+        MOBILE["mobile-app<br/>(client, untrusted)"]
+    end
+
+    subgraph GATEWAY["Trust boundary: gateway"]
+        GW["api-gateway<br/>(internet-facing — no WAF yet, RR-05)"]
+    end
+
+    subgraph AKS["Trust boundary: aks / gke / eks"]
+        PAY["payment-service<br/>(scoped identity ✓)"]
+        ACC["account-service<br/>(scoped identity ✓, Phase 4)"]
+        NOTIF["notification-service<br/>(no identity binding — §21)"]
+    end
+
+    subgraph DATA["Trust boundary: data"]
+        KV["key-vault<br/>(secret-store)"]
+        STORE["customer-storage<br/>(encrypted, private)"]
+    end
+
+    subgraph MGMT["Trust boundary: mgmt"]
+        LOG["log-workspace<br/>(Phase 9, 90-day retention)"]
+    end
+
+    MOBILE -->|"HTTPS, authenticated"| GW
+    GW -->|"HTTPS, mTLS (Phase 4)"| PAY
+    GW -->|"HTTPS, mTLS (Phase 4)"| ACC
+    GW -->|"HTTPS, mTLS (Phase 4)"| NOTIF
+    PAY -->|"HTTPS, mTLS"| KV
+    PAY -->|"HTTPS, mTLS"| STORE
+    ACC -->|"HTTPS, mTLS"| KV
+
+    style NOTIF fill:#fff3cd,stroke:#997404
+    style GW fill:#fff3cd,stroke:#997404

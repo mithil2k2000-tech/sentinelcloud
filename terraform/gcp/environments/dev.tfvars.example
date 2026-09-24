@@ -1,0 +1,13 @@
+project_id   = "your-gcp-project-id"
+project_name = "csp"
+environment  = "dev"
+region       = "europe-west2"
+
+# Set to your actual admin/office IP range before applying. Never 0.0.0.0/0.
+allowed_admin_cidrs = ["203.0.113.0/29"]
+
+labels = {
+  project     = "cloud-security-platform"
+  environment = "dev"
+  managed-by  = "terraform"
+}

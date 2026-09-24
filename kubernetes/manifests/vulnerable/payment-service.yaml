@@ -1,0 +1,30 @@
+# Deliberately vulnerable — privileged container, no resource limits, and
+# a mutable :latest image tag. See docs/phase5-kubernetes.md.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-service
+  namespace: app
+  labels:
+    app: payment-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: payment-service
+  template:
+    metadata:
+      labels:
+        app: payment-service
+    spec:
+      serviceAccountName: payment-service
+      containers:
+        - name: payment-service
+          image: meridiantrustbank/payment-service:latest
+          ports:
+            - containerPort: 8080
+          securityContext:
+            privileged: true
+          env:
+            - name: SERVICE_NAME
+              value: payment-service

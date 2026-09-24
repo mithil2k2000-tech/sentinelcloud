@@ -1,0 +1,46 @@
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfvars
+!**/environments/*.tfvars.example
+crash.log
+crash.*.log
+.terraform.lock.hcl
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Rust (tools/rego-test-runner — local dev substitute for `opa test`;
+# CI uses the real open-policy-agent/setup-opa action instead)
+tools/rego-test-runner/target/
+Cargo.lock
+
+# pytest
+.pytest_cache/
+
+# CI-run scratch output (regenerated fresh by every workflow run via `tee`
+# — never a committed deliverable; the real committed snapshots are the
+# threat-model/*report*.json, *.md, and dashboard.html files checked in on
+# purpose for docs/snapshot tests)
+agent/*-report.txt
+agent/eval/*-report.txt
+agent/attack-sim-*.txt
+agent/dashboard-summary.txt
+agent/k8s-report.txt
+agent/drift-report.txt
+agent/detect-report.txt
+demo/walkthrough.txt
+logging/ingest.txt
+logging/query.txt

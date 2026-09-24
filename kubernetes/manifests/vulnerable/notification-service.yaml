@@ -1,0 +1,32 @@
+# Deliberately vulnerable — no resource limits (one noisy/compromised pod
+# can starve every other pod on the node) and a mutable :latest image tag.
+# Lower-sensitivity workload (no outgoing flow to sensitive data, per
+# threat-model/architecture-hardened*.json), so no RBAC binding here —
+# consistent with those files' own "notification-service touches nothing
+# sensitive" note. See docs/phase5-kubernetes.md.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-service
+  namespace: app
+  labels:
+    app: notification-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: notification-service
+  template:
+    metadata:
+      labels:
+        app: notification-service
+    spec:
+      serviceAccountName: notification-service
+      containers:
+        - name: notification-service
+          image: meridiantrustbank/notification-service:latest
+          ports:
+            - containerPort: 8082
+          env:
+            - name: SERVICE_NAME
+              value: notification-service

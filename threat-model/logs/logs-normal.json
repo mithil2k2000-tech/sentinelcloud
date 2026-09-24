@@ -1,0 +1,9 @@
+{
+  "events": [
+    { "event_id": "evt-001", "timestamp": "2026-09-15T09:02:11Z", "event_type": "auth", "principal": "s.okoye", "source_ip": "10.20.4.12", "target": "api-gateway", "outcome": "success", "region": "uk-london" },
+    { "event_id": "evt-002", "timestamp": "2026-09-15T09:15:40Z", "event_type": "data_transfer", "principal": "s.okoye", "source_ip": "10.20.4.12", "target": "customer-storage", "outcome": "success", "bytes_transferred": 4200000 },
+    { "event_id": "evt-003", "timestamp": "2026-09-15T14:30:02Z", "event_type": "iam_change", "principal": "m.reyes", "source_ip": "10.20.12.4", "target": "notification-service-role", "outcome": "success" },
+    { "event_id": "evt-004", "timestamp": "2026-09-15T14:31:55Z", "event_type": "auth", "principal": "m.reyes", "source_ip": "10.20.12.4", "target": "api-gateway", "outcome": "success", "region": "uk-london" },
+    { "event_id": "evt-005", "timestamp": "2026-09-15T16:02:00Z", "event_type": "auth", "principal": "s.okoye", "source_ip": "10.20.4.12", "target": "api-gateway", "outcome": "failure", "region": "uk-london" }
+  ]
+}

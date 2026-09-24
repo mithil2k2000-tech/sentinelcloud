@@ -1,0 +1,6 @@
+{
+  "events": [
+    { "event_id": "evt-301", "timestamp": "2026-09-16T08:00:00Z", "event_type": "auth", "principal": "a.brandt", "source_ip": "51.140.2.10", "target": "api-gateway", "outcome": "success", "region": "uk-london" },
+    { "event_id": "evt-302", "timestamp": "2026-09-16T08:25:00Z", "event_type": "auth", "principal": "a.brandt", "source_ip": "103.21.244.5", "target": "api-gateway", "outcome": "success", "region": "sg-singapore" }
+  ]
+}

@@ -1,0 +1,19 @@
+flowchart LR
+    F["Finding<br/>(threat_engine.py / k8s_engine.py / drift.py)"]
+    T["Threat<br/>(STRIDE category)"]
+    I["Impact<br/>(what breaks if left as-is)"]
+    R["Risk Score<br/>(risk_model.py, opt-in: impact × likelihood)"]
+    C["Control<br/>(control_id, e.g. IAM-004)"]
+    P["Policy<br/>(the specific rule that failed)"]
+    X["Explanation<br/>(explain.py — LLM narration, reads only)"]
+    D["BLOCKED / ALLOWED<br/>(analyze.py, deterministic)"]
+    RE["Remediation<br/>(engineer fixes the input, re-run)"]
+
+    F --> T --> I --> R
+    F --> C --> P --> D
+    F -.-> X
+    X -.narrates, never decides.-> D
+    D --> RE --> F
+
+    style D fill:#d1e7dd,stroke:#0f5132
+    style X fill:#fff3cd,stroke:#997404

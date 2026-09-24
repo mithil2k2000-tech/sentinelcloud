@@ -1,0 +1,32 @@
+{
+  "name": "Mobile Banking App — first-draft proposal (as submitted by engineering, pre-review)",
+  "assets": [
+    { "id": "mobile-app", "type": "client", "subnet": "internet", "sensitivity": "low", "internet_facing": true },
+    { "id": "api-gateway", "type": "gateway", "subnet": "flat", "sensitivity": "medium", "internet_facing": true, "waf_enabled": false },
+    { "id": "payment-service", "type": "compute", "subnet": "flat", "sensitivity": "high" },
+    { "id": "account-service", "type": "compute", "subnet": "flat", "sensitivity": "high" },
+    { "id": "notification-service", "type": "compute", "subnet": "flat", "sensitivity": "low" },
+    { "id": "customer-db", "type": "database", "subnet": "flat", "sensitivity": "critical", "public_network_access": true, "encrypted_at_rest": false },
+    { "id": "customer-storage", "type": "storage", "subnet": "flat", "sensitivity": "critical", "public_network_access": true, "allow_public_blob": true, "encrypted_at_rest": false }
+  ],
+  "trust_boundaries": [
+    { "id": "internet", "contains": ["mobile-app"] },
+    { "id": "flat", "contains": ["api-gateway", "payment-service", "account-service", "notification-service", "customer-db", "customer-storage"] }
+  ],
+  "flows": [
+    { "from": "mobile-app", "to": "api-gateway", "protocol": "https", "port": 443, "authenticated": true },
+    { "from": "api-gateway", "to": "payment-service", "protocol": "https", "port": 443, "authenticated": false },
+    { "from": "api-gateway", "to": "account-service", "protocol": "https", "port": 443, "authenticated": false },
+    { "from": "api-gateway", "to": "notification-service", "protocol": "https", "port": 443, "authenticated": false },
+    { "from": "payment-service", "to": "customer-db", "protocol": "tcp", "port": 5432, "authenticated": true },
+    { "from": "account-service", "to": "customer-db", "protocol": "tcp", "port": 5432, "authenticated": true },
+    { "from": "notification-service", "to": "customer-db", "protocol": "tcp", "port": 5432, "authenticated": true },
+    { "from": "payment-service", "to": "customer-storage", "protocol": "https", "port": 443, "authenticated": true }
+  ],
+  "identity_bindings": [
+    { "principal": "payment-service", "role": "Contributor", "scope": "subscription" },
+    { "principal": "account-service", "role": "Contributor", "scope": "subscription" },
+    { "principal": "notification-service", "role": null, "scope": null }
+  ],
+  "logging": { "enabled": false }
+}

@@ -1,0 +1,13 @@
+# Vulnerable baseline — deliberately unsafe, for the Phase 5 threat engine
+# (agent/k8s_engine.py) to catch. Do not deploy this as-is; see
+# kubernetes/manifests/hardened/ for the remediated version and
+# docs/phase5-kubernetes.md for the full before/after.
+#
+# Matches terraform/{azure,gcp,aws}/modules/mesh's app_namespace default
+# ("app") — same namespace the service mesh's sidecar injection targets.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: app
+  labels:
+    istio-injection: enabled

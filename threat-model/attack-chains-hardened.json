@@ -1,0 +1,89 @@
+{
+  "architecture": "Mobile Banking App \u2014 as implemented in terraform/azure (Phase 1 scaffold)",
+  "label": "(reachability analysis only \u2014 not a penetration test or proof of exploitability)",
+  "chain_count": 3,
+  "high_feasibility_count": 0,
+  "chains": [
+    {
+      "chain_id": "CHAIN-01",
+      "entry": "mobile-app",
+      "target": "key-vault",
+      "target_type": "secret-store",
+      "target_sensitivity": "critical",
+      "path": "mobile-app -> api-gateway -> account-service -> key-vault",
+      "hops": [
+        {
+          "from": "mobile-app",
+          "to": "api-gateway",
+          "authenticated": true
+        },
+        {
+          "from": "api-gateway",
+          "to": "account-service",
+          "authenticated": true
+        },
+        {
+          "from": "account-service",
+          "to": "key-vault",
+          "authenticated": true
+        }
+      ],
+      "broken_hop_count": 0,
+      "feasibility": "LOW"
+    },
+    {
+      "chain_id": "CHAIN-02",
+      "entry": "mobile-app",
+      "target": "key-vault",
+      "target_type": "secret-store",
+      "target_sensitivity": "critical",
+      "path": "mobile-app -> api-gateway -> payment-service -> key-vault",
+      "hops": [
+        {
+          "from": "mobile-app",
+          "to": "api-gateway",
+          "authenticated": true
+        },
+        {
+          "from": "api-gateway",
+          "to": "payment-service",
+          "authenticated": true
+        },
+        {
+          "from": "payment-service",
+          "to": "key-vault",
+          "authenticated": true
+        }
+      ],
+      "broken_hop_count": 0,
+      "feasibility": "LOW"
+    },
+    {
+      "chain_id": "CHAIN-03",
+      "entry": "mobile-app",
+      "target": "customer-storage",
+      "target_type": "storage",
+      "target_sensitivity": "critical",
+      "path": "mobile-app -> api-gateway -> payment-service -> customer-storage",
+      "hops": [
+        {
+          "from": "mobile-app",
+          "to": "api-gateway",
+          "authenticated": true
+        },
+        {
+          "from": "api-gateway",
+          "to": "payment-service",
+          "authenticated": true
+        },
+        {
+          "from": "payment-service",
+          "to": "customer-storage",
+          "authenticated": true
+        }
+      ],
+      "broken_hop_count": 0,
+      "feasibility": "LOW"
+    }
+  ]
+}

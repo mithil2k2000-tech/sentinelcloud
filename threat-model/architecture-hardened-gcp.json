@@ -1,0 +1,179 @@
+{
+  "name": "Mobile Banking App \u2014 as implemented in terraform/gcp (Phase 1 scaffold)",
+  "assets": [
+    {
+      "id": "mobile-app",
+      "type": "client",
+      "subnet": "internet",
+      "sensitivity": "low",
+      "internet_facing": true
+    },
+    {
+      "id": "api-gateway",
+      "type": "gateway",
+      "subnet": "gateway",
+      "sensitivity": "medium",
+      "internet_facing": true,
+      "waf_enabled": false
+    },
+    {
+      "id": "payment-service",
+      "type": "compute",
+      "subnet": "gke",
+      "sensitivity": "high"
+    },
+    {
+      "id": "account-service",
+      "type": "compute",
+      "subnet": "gke",
+      "sensitivity": "high"
+    },
+    {
+      "id": "notification-service",
+      "type": "compute",
+      "subnet": "gke",
+      "sensitivity": "low"
+    },
+    {
+      "id": "secrets-kms",
+      "type": "secret-store",
+      "subnet": "data",
+      "sensitivity": "critical",
+      "public_network_access": false,
+      "encrypted_at_rest": true
+    },
+    {
+      "id": "customer-storage",
+      "type": "storage",
+      "subnet": "data",
+      "sensitivity": "critical",
+      "public_network_access": false,
+      "allow_public_blob": false,
+      "encrypted_at_rest": true
+    },
+    {
+      "id": "log-workspace",
+      "type": "logging",
+      "subnet": "mgmt",
+      "sensitivity": "medium",
+      "public_network_access": false,
+      "encrypted_at_rest": true
+    }
+  ],
+  "trust_boundaries": [
+    {
+      "id": "internet",
+      "contains": [
+        "mobile-app"
+      ]
+    },
+    {
+      "id": "gateway",
+      "contains": [
+        "api-gateway"
+      ]
+    },
+    {
+      "id": "gke",
+      "contains": [
+        "payment-service",
+        "account-service",
+        "notification-service"
+      ]
+    },
+    {
+      "id": "data",
+      "contains": [
+        "secrets-kms",
+        "customer-storage"
+      ]
+    },
+    {
+      "id": "mgmt",
+      "contains": [
+        "log-workspace"
+      ]
+    }
+  ],
+  "flows": [
+    {
+      "from": "mobile-app",
+      "to": "api-gateway",
+      "protocol": "https",
+      "port": 443,
+      "authenticated": true
+    },
+    {
+      "from": "api-gateway",
+      "to": "payment-service",
+      "protocol": "https",
+      "port": 443,
+      "authenticated": true
+    },
+    {
+      "from": "api-gateway",
+      "to": "account-service",
+      "protocol": "https",
+      "port": 443,
+      "authenticated": true
+    },
+    {
+      "from": "api-gateway",
+      "to": "notification-service",
+      "protocol": "https",
+      "port": 443,
+      "authenticated": true
+    },
+    {
+      "from": "payment-service",
+      "to": "secrets-kms",
+      "protocol": "https",
+      "port": 443,
+      "authenticated": true
+    },
+    {
+      "from": "payment-service",
+      "to": "customer-storage",
+      "protocol": "https",
+      "port": 443,
+      "authenticated": true
+    },
+    {
+      "from": "account-service",
+      "to": "secrets-kms",
+      "protocol": "https",
+      "port": 443,
+      "authenticated": true
+    }
+  ],
+  "identity_bindings": [
+    {
+      "principal": "payment-service",
+      "role": "IAM-004-payment-data-access",
+      "scope": "resource"
+    },
+    {
+      "principal": "account-service",
+      "role": "IAM-004-account-secrets-access",
+      "scope": "resource"
+    },
+    {
+      "principal": "notification-service",
+      "role": null,
+      "scope": null
+    }
+  ],
+  "logging": {
+    "enabled": true,
+    "destination": "log-workspace",
+    "retention_days": 90,
+    "local_query_enabled": true
+  },
+  "_notes": [
+    "payment-service's IAM binding is scoped to 'resource' (the specific GCS bucket via google_storage_bucket_iam_member), narrower than Azure's current 'resource-group' scope \u2014 a genuine improvement worth backporting to Azure once a real payments resource exists there.",
+    "Firewall rules restrict the data-tier tag to traffic from gke-tagged instances only (modules/network) \u2014 modeled here as trust-boundary separation since GCS/Secret Manager access is actually governed by IAM, not VPC firewalls (they're managed services, not VM instances).",
+    "notification-service has no IAM binding \u2014 it touches no sensitive data (no outgoing flow), so IAM-MISSING-01 correctly doesn't flag it; not fixed because nothing requires fixing.",
+    "Phase 9: modules/logging now routes a project-wide audit-log sink (log-workspace) to a dedicated, versioned GCS bucket, with Data Access audit logging turned on for all services \u2014 closes RR-01.",
+    "Phase 4 (Zero Trust, RR-02/RR-03/RR-04): account-service now has its own role, scoped to the one Secret Manager secret (modules/iam + modules/secrets) \u2014 closes RR-02, and its own SDK calls to Secret Manager are now a real IAM-authenticated request, not just network reachability, closing RR-03. api-gateway -> service traffic is now mutually authenticated via a mesh-wide STRICT Istio PeerAuthentication (modules/mesh) \u2014 closes RR-04. See docs/phase4-zero-trust.md."
+  ]
+}

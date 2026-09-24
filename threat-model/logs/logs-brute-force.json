@@ -1,0 +1,10 @@
+{
+  "events": [
+    { "event_id": "evt-101", "timestamp": "2026-09-16T02:01:00Z", "event_type": "auth", "principal": "d.hartley", "source_ip": "198.51.100.23", "target": "api-gateway", "outcome": "failure" },
+    { "event_id": "evt-102", "timestamp": "2026-09-16T02:01:05Z", "event_type": "auth", "principal": "d.hartley", "source_ip": "198.51.100.23", "target": "api-gateway", "outcome": "failure" },
+    { "event_id": "evt-103", "timestamp": "2026-09-16T02:01:10Z", "event_type": "auth", "principal": "d.hartley", "source_ip": "198.51.100.23", "target": "api-gateway", "outcome": "failure" },
+    { "event_id": "evt-104", "timestamp": "2026-09-16T02:01:15Z", "event_type": "auth", "principal": "d.hartley", "source_ip": "198.51.100.23", "target": "api-gateway", "outcome": "failure" },
+    { "event_id": "evt-105", "timestamp": "2026-09-16T02:01:20Z", "event_type": "auth", "principal": "d.hartley", "source_ip": "198.51.100.23", "target": "api-gateway", "outcome": "failure" },
+    { "event_id": "evt-106", "timestamp": "2026-09-16T02:01:25Z", "event_type": "auth", "principal": "d.hartley", "source_ip": "198.51.100.23", "target": "api-gateway", "outcome": "failure" }
+  ]
+}

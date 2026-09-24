@@ -1,0 +1,618 @@
+{
+  "total": 38,
+  "passed": 38,
+  "failed": 0,
+  "pass_rate": 1.0,
+  "threshold": 0.95,
+  "meets_threshold": true,
+  "results": [
+    {
+      "kind": "finding",
+      "source": "threat_engine/architecture-proposed.json",
+      "identifier": "IAM-BROAD-01",
+      "severity": "CRITICAL",
+      "title": "payment-service \u2192 subscription-wide Contributor role",
+      "narrative": "payment-service \u2192 subscription-wide Contributor role. Why it matters: A compromised payment-service container/process could use its Contributor role to read, modify, or delete ANY resource in the subscription \u2014 not just the ones it actually needs. If left as-is: Full subscription compromise from a single workload breach. Fix: Replace with a custom role scoped to exactly the resource(s) payment-service needs (see modules/iam's custom role_definition pattern).",
+      "passed": true,
+      "checks": {
+        "nonempty_and_substantial": true,
+        "no_llm_error_fallback": true,
+        "no_forbidden_overclaim_language": true,
+        "no_contradicting_severity_word": true,
+        "shares_a_real_word_with_title": true
+      }
+    },
+    {
+      "kind": "finding",
+      "source": "threat_engine/architecture-proposed.json",
+      "identifier": "IAM-BROAD-01",
+      "severity": "CRITICAL",
+      "title": "account-service \u2192 subscription-wide Contributor role",
+      "narrative": "account-service \u2192 subscription-wide Contributor role. Why it matters: A compromised account-service container/process could use its Contributor role to read, modify, or delete ANY resource in the subscription \u2014 not just the ones it actually needs. If left as-is: Full subscription compromise from a single workload breach. Fix: Replace with a custom role scoped to exactly the resource(s) account-service needs (see modules/iam's custom role_definition pattern).",
+      "passed": true,
+      "checks": {
+        "nonempty_and_substantial": true,
+        "no_llm_error_fallback": true,
+        "no_forbidden_overclaim_language": true,
+        "no_contradicting_severity_word": true,
+        "shares_a_real_word_with_title": true
+      }
+    },
+    {
+      "kind": "finding",
+      "source": "threat_engine/architecture-proposed.json",
+      "identifier": "NET-PUBLIC-01",
+      "severity": "CRITICAL",
+      "title": "customer-db allows public network access",
+      "narrative": "customer-db allows public network access. Why it matters: customer-db is reachable directly from the internet, bypassing every network control. If left as-is: Direct exposure of customer data to internet-wide scanning and exploitation. Fix: Set public_network_access_enabled = false and add a private endpoint in the data subnet.",
+      "passed": true,
+      "checks": {
+        "nonempty_and_substantial": true,
+        "no_llm_error_fallback": true,
+        "no_forbidden_overclaim_language": true,
+        "no_contradicting_severity_word": true,
+        "shares_a_real_word_with_title": true
+      }
+    },
+    {
+      "kind": "finding",
+      "source": "threat_engine/architecture-proposed.json",
+      "identifier": "NET-PUBLIC-01",
+      "severity": "CRITICAL",
+      "title": "customer-storage allows public network access",
+      "narrative": "customer-storage allows public network access. Why it matters: customer-storage is reachable directly from the internet, bypassing every network control. If left as-is: Direct exposure of customer data to internet-wide scanning and exploitation. Fix: Set public_network_access_enabled = false and add a private endpoint in the data subnet.",
+      "passed": true,
+      "checks": {
+        "nonempty_and_substantial": true,
+        "no_llm_error_fallback": true,
+        "no_forbidden_overclaim_language": true,
+        "no_contradicting_severity_word": true,
+        "shares_a_real_word_with_title": true
+      }
+    },
+    {
+      "kind": "finding",
+      "source": "threat_engine/architecture-proposed.json",
+      "identifier": "NET-PUBLIC-02",
+      "severity": "CRITICAL",
+      "title": "customer-storage allows public blob/container access",
+      "narrative": "customer-storage allows public blob/container access. Why it matters: Any container in customer-storage could be individually set to public, exposing its contents with a URL. If left as-is: Silent data exposure \u2014 no network log will show it as unusual, it's 'working as configured'. Fix: Disable public nested-item access at the account level so no container can opt in later.",
+      "passed": true,
+      "checks": {
+        "nonempty_and_substantial": true,
+        "no_llm_error_fallback": true,
+        "no_forbidden_overclaim_language": true,
+        "no_contradicting_severity_word": true,
+        "shares_a_real_word_with_title": true
+      }
+    },
+    {
+      "kind": "finding",
+      "source": "threat_engine/architecture-proposed.json",
+      "identifier": "NET-SEGMENT-01",
+      "severity": "CRITICAL",
+      "title": "No network segmentation in trust boundary 'flat'",
+      "narrative": "No network segmentation in trust boundary 'flat'. Why it matters: Compute workloads and sensitive data stores share one flat network zone. A single compromised container can reach every data store here directly \u2014 this is the exact 'payment service \u2192 unrestricted database access' pattern. If left as-is: Lateral movement from any one compromised service to all sensitive data. Fix: Split into dedicated subnets (see modules/network's gateway/aks/data/mgmt layout) with deny-by-default NSGs.",
+      "passed": true,
+      "checks": {
+        "nonempty_and_substantial": true,
+        "no_llm_error_fallback": true,
+        "no_forbidden_overclaim_language": true,
+        "no_contradicting_severity_word": true,
+        "shares_a_real_word_with_title": true
+      }
+    },
+    {
+      "kind": "finding",
+      "source": "threat_engine/architecture-proposed.json",
+      "identifier": "DATA-ENC-01",
+      "severity": "HIGH",
+      "title": "customer-db has no encryption at rest",
+      "narrative": "customer-db has no encryption at rest. Why it matters: Data in customer-db is readable/tamperable by anyone with disk-level or backup access. If left as-is: Regulatory exposure (data protection requirements) plus tampering risk on backups/snapshots. Fix: Enable encryption at rest (see the require-encryption-at-rest Azure Policy in modules/policy).",
+      "passed": true,
+      "checks": {
+        "nonempty_and_substantial": true,
+        "no_llm_error_fallback": true,
+        "no_forbidden_overclaim_language": true,
+        "no_contradicting_severity_word": true,
+        "shares_a_real_word_with_title": true
+      }
+    },
+    {
+      "kind": "finding",
+      "source": "threat_engine/architecture-proposed.json",
+      "identifier": "DATA-ENC-01",
+      "severity": "HIGH",
+      "title": "customer-storage has no encryption at rest",
+      "narrative": "customer-storage has no encryption at rest. Why it matters: Data in customer-storage is readable/tamperable by anyone with disk-level or backup access. If left as-is: Regulatory exposure (data protection requirements) plus tampering risk on backups/snapshots. Fix: Enable encryption at rest (see the require-encryption-at-rest Azure Policy in modules/policy).",
+      "passed": true,
+      "checks": {
+        "nonempty_and_substantial": true,
+        "no_llm_error_fallback": true,
+        "no_forbidden_overclaim_language": true,
+        "no_contradicting_severity_word": true,
+        "shares_a_real_word_with_title": true
+      }
+    },
+    {
+      "kind": "finding",
+      "source": "threat_engine/architecture-proposed.json",
+      "identifier": "LOG-001",
+      "severity": "HIGH",
+      "title": "No centralized audit logging configured",
+      "narrative": "No centralized audit logging configured. Why it matters: Without diagnostic logs flowing to a central workspace, there's no way to reconstruct what happened after an incident, or prove who did what. If left as-is: Undetectable breaches and no forensic trail \u2014 also a compliance gap (most frameworks require audit logging). Fix: Wire up diagnostic settings + a Log Analytics workspace (Phase 9 \u2014 SIEM + Detection, not yet built).",
+      "passed": true,
+      "checks": {
+        "nonempty_and_substantial": true,
+        "no_llm_error_fallback": true,
+        "no_forbidden_overclaim_language": true,
+        "no_contradicting_severity_word": true,
+        "shares_a_real_word_with_title": true
+      }
+    },
+    {
+      "kind": "finding",
+      "source": "threat_engine/architecture-proposed.json",
+      "identifier": "IAM-MISSING-01",
+      "severity": "MEDIUM",
+      "title": "notification-service has no dedicated identity/role",
+      "narrative": "notification-service has no dedicated identity/role. Why it matters: notification-service reaches sensitive data with no assigned identity. In practice this gets worked around with a shared service account, an ambient credential, or a manually-granted broad role \u2014 all worse than a scoped one from the start. If left as-is: No way to attribute or limit this workload's access; likely over-privileged in practice. Fix: Create a dedicated app registration/service principal and custom role for notification-service, matching payment-service's pattern.",
+      "passed": true,
+      "checks": {
+        "nonempty_and_substantial": true,
+        "no_llm_error_fallback": true,
+        "no_forbidden_overclaim_language": true,
+        "no_contradicting_severity_word": true,
+        "shares_a_real_word_with_title": true
+      }
+    },
+    {
+      "kind": "finding",
+      "source": "threat_engine/architecture-proposed.json",
+      "identifier": "AUTHN-FLOW-01",
+      "severity": "MEDIUM",
+      "title": "No application-layer authentication: api-gateway \u2192 payment-service",
+      "narrative": "No application-layer authentication: api-gateway \u2192 payment-service. Why it matters: Network reachability from api-gateway to payment-service exists, but there's no app-layer proof of identity (mTLS/OAuth/service-mesh token) \u2014 anything else that lands in the same subnet can impersonate the caller. If left as-is: Any workload placed in the same network path can call this service as if it were the legitimate caller. Fix: Introduce a service mesh (mTLS) or OAuth token validation between gateway and services (Phase 4 \u2014 Zero Trust).",
+      "passed": true,
+      "checks": {
+        "nonempty_and_substantial": true,
+        "no_llm_error_fallback": true,
+        "no_forbidden_overclaim_language": true,
+        "no_contradicting_severity_word": true,
+        "shares_a_real_word_with_title": true
+      }
+    },
+    {
+      "kind": "finding",
+      "source": "threat_engine/architecture-proposed.json",
+      "identifier": "AUTHN-FLOW-01",
+      "severity": "MEDIUM",
+      "title": "No application-layer authentication: api-gateway \u2192 account-service",
+      "narrative": "No application-layer authentication: api-gateway \u2192 account-service. Why it matters: Network reachability from api-gateway to account-service exists, but there's no app-layer proof of identity (mTLS/OAuth/service-mesh token) \u2014 anything else that lands in the same subnet can impersonate the caller. If left as-is: Any workload placed in the same network path can call this service as if it were the legitimate caller. Fix: Introduce a service mesh (mTLS) or OAuth token validation between gateway and services (Phase 4 \u2014 Zero Trust).",
+      "passed": true,
+      "checks": {
+        "nonempty_and_substantial": true,
+        "no_llm_error_fallback": true,
+        "no_forbidden_overclaim_language": true,
+        "no_contradicting_severity_word": true,
+        "shares_a_real_word_with_title": true
+      }
+    },
+    {
+      "kind": "finding",
+      "source": "threat_engine/architecture-proposed.json",
+      "identifier": "NET-WAF-01",
+      "severity": "MEDIUM",
+      "title": "api-gateway has no WAF/rate-limiting in front of it",
+      "narrative": "api-gateway has no WAF/rate-limiting in front of it. Why it matters: api-gateway is directly internet-facing with no layer-7 filtering \u2014 vulnerable to L7 DoS and common injection patterns hitting the app directly. If left as-is: Availability risk and a missing layer of defense against common web attacks. Fix: Deploy Azure Front Door or Application Gateway with a WAF policy in front of the gateway subnet.",
+      "passed": true,
+      "checks": {
+        "nonempty_and_substantial": true,
+        "no_llm_error_fallback": true,
+        "no_forbidden_overclaim_language": true,
+        "no_contradicting_severity_word": true,
+        "shares_a_real_word_with_title": true
+      }
+    },
+    {
+      "kind": "finding",
+      "source": "k8s_engine/manifests/vulnerable",
+      "identifier": "K8S-PRIV-01",
+      "severity": "CRITICAL",
+      "title": "Deployment/payment-service container 'payment-service' runs privileged",
+      "narrative": "Deployment/payment-service container 'payment-service' runs privileged. Why it matters: A privileged container has essentially unrestricted access to the host \u2014 every device, every kernel capability, no seccomp/AppArmor confinement. A compromised process inside it can escape to the node directly. If left as-is: Container compromise becomes node compromise, and from there every workload scheduled on that node. Fix: Remove privileged: true; request only the specific capabilities actually needed instead (see K8S-CAP-01).",
+      "passed": true,
+      "checks": {
+        "nonempty_and_substantial": true,
+        "no_llm_error_fallback": true,
+        "no_forbidden_overclaim_language": true,
+        "no_contradicting_severity_word": true,
+        "shares_a_real_word_with_title": true
+      }
+    },
+    {
+      "kind": "finding",
+      "source": "k8s_engine/manifests/vulnerable",
+      "identifier": "K8S-HOSTNS-01",
+      "severity": "CRITICAL",
+      "title": "Deployment/account-service shares the host's hostNetwork, hostPID",
+      "narrative": "Deployment/account-service shares the host's hostNetwork, hostPID. Why it matters: hostNetwork exposes the node's real network interfaces (no namespace isolation \u2014 the pod sees and can inject on the same interfaces the node itself uses); hostPID/hostIPC let the pod see and signal every process on the node, not just its own. If left as-is: A compromised pod can sniff/spoof node-level network traffic and inspect or kill other pods' processes on the same node. Fix: Remove the hostNetwork/hostPID/hostIPC fields; use a Kubernetes Service for network access and standard pod-to-pod isolation instead.",
+      "passed": true,
+      "checks": {
+        "nonempty_and_substantial": true,
+        "no_llm_error_fallback": true,
+        "no_forbidden_overclaim_language": true,
+        "no_contradicting_severity_word": true,
+        "shares_a_real_word_with_title": true
+      }
+    },
+    {
+      "kind": "finding",
+      "source": "k8s_engine/manifests/vulnerable",
+      "identifier": "K8S-RBAC-01",
+      "severity": "CRITICAL",
+      "title": "ClusterRole/payment-service-role grants wildcard verbs and resources ('*'/'*')",
+      "narrative": "ClusterRole/payment-service-role grants wildcard verbs and resources ('*'/'*'). Why it matters: Any ServiceAccount bound to this role can read, create, modify, or delete any resource of any kind cluster-wide \u2014 Secrets, other workloads' pods, RBAC objects themselves. If left as-is: A compromised pod using this identity can pivot to read every Secret and take over every other workload it can reach, not just act within its own intended scope. Fix: Replace the wildcard rule with the specific verbs and resources the bound ServiceAccount actually needs \u2014 same least-privilege principle as the cloud IAM roles in terraform/*/modules/iam.",
+      "passed": true,
+      "checks": {
+        "nonempty_and_substantial": true,
+        "no_llm_error_fallback": true,
+        "no_forbidden_overclaim_language": true,
+        "no_contradicting_severity_word": true,
+        "shares_a_real_word_with_title": true
+      }
+    },
+    {
+      "kind": "finding",
+      "source": "k8s_engine/manifests/vulnerable",
+      "identifier": "K8S-ROOT-01",
+      "severity": "HIGH",
+      "title": "Deployment/account-service container 'account-service' does not enforce runAsNonRoot",
+      "narrative": "Deployment/account-service container 'account-service' does not enforce runAsNonRoot. Why it matters: Without runAsNonRoot: true, the container can run as UID 0 (root) \u2014 whatever the image's Dockerfile happens to specify, not a property this manifest actually controls. If left as-is: A container-breakout bug is far more dangerous as root: it starts with root's filesystem/capability defaults instead of an unprivileged user's. Fix: Add runAsNonRoot: true (and runAsUser: <non-zero UID>) to the container's securityContext.",
+      "passed": true,
+      "checks": {
+        "nonempty_and_substantial": true,
+        "no_llm_error_fallback": true,
+        "no_forbidden_overclaim_language": true,
+        "no_contradicting_severity_word": true,
+        "shares_a_real_word_with_title": true
+      }
+    },
+    {
+      "kind": "finding",
+      "source": "k8s_engine/manifests/vulnerable",
+      "identifier": "K8S-ROOT-01",
+      "severity": "HIGH",
+      "title": "Deployment/notification-service container 'notification-service' does not enforce runAsNonRoot",
+      "narrative": "Deployment/notification-service container 'notification-service' does not enforce runAsNonRoot. Why it matters: Without runAsNonRoot: true, the container can run as UID 0 (root) \u2014 whatever the image's Dockerfile happens to specify, not a property this manifest actually controls. If left as-is: A container-breakout bug is far more dangerous as root: it starts with root's filesystem/capability defaults instead of an unprivileged user's. Fix: Add runAsNonRoot: true (and runAsUser: <non-zero UID>) to the container's securityContext.",
+      "passed": true,
+      "checks": {
+        "nonempty_and_substantial": true,
+        "no_llm_error_fallback": true,
+        "no_forbidden_overclaim_language": true,
+        "no_contradicting_severity_word": true,
+        "shares_a_real_word_with_title": true
+      }
+    },
+    {
+      "kind": "finding",
+      "source": "k8s_engine/manifests/vulnerable",
+      "identifier": "K8S-ROOT-01",
+      "severity": "HIGH",
+      "title": "Deployment/payment-service container 'payment-service' does not enforce runAsNonRoot",
+      "narrative": "Deployment/payment-service container 'payment-service' does not enforce runAsNonRoot. Why it matters: Without runAsNonRoot: true, the container can run as UID 0 (root) \u2014 whatever the image's Dockerfile happens to specify, not a property this manifest actually controls. If left as-is: A container-breakout bug is far more dangerous as root: it starts with root's filesystem/capability defaults instead of an unprivileged user's. Fix: Add runAsNonRoot: true (and runAsUser: <non-zero UID>) to the container's securityContext.",
+      "passed": true,
+      "checks": {
+        "nonempty_and_substantial": true,
+        "no_llm_error_fallback": true,
+        "no_forbidden_overclaim_language": true,
+        "no_contradicting_severity_word": true,
+        "shares_a_real_word_with_title": true
+      }
+    },
+    {
+      "kind": "finding",
+      "source": "k8s_engine/manifests/vulnerable",
+      "identifier": "K8S-CAP-01",
+      "severity": "HIGH",
+      "title": "Deployment/account-service container 'account-service' does not drop all Linux capabilities",
+      "narrative": "Deployment/account-service container 'account-service' does not drop all Linux capabilities. Why it matters: Containers get a broad default capability set unless the manifest explicitly drops it. Most workloads need none of the default set at all. If left as-is: An unnecessary default capability (e.g. CAP_NET_RAW, CAP_CHOWN) becomes one more tool available to an attacker who compromises the process. Fix: Add capabilities.drop: [\"ALL\"] and only capabilities.add the specific ones the workload actually requires, if any.",
+      "passed": true,
+      "checks": {
+        "nonempty_and_substantial": true,
+        "no_llm_error_fallback": true,
+        "no_forbidden_overclaim_language": true,
+        "no_contradicting_severity_word": true,
+        "shares_a_real_word_with_title": true
+      }
+    },
+    {
+      "kind": "finding",
+      "source": "k8s_engine/manifests/vulnerable",
+      "identifier": "K8S-CAP-01",
+      "severity": "HIGH",
+      "title": "Deployment/notification-service container 'notification-service' does not drop all Linux capabilities",
+      "narrative": "Deployment/notification-service container 'notification-service' does not drop all Linux capabilities. Why it matters: Containers get a broad default capability set unless the manifest explicitly drops it. Most workloads need none of the default set at all. If left as-is: An unnecessary default capability (e.g. CAP_NET_RAW, CAP_CHOWN) becomes one more tool available to an attacker who compromises the process. Fix: Add capabilities.drop: [\"ALL\"] and only capabilities.add the specific ones the workload actually requires, if any.",
+      "passed": true,
+      "checks": {
+        "nonempty_and_substantial": true,
+        "no_llm_error_fallback": true,
+        "no_forbidden_overclaim_language": true,
+        "no_contradicting_severity_word": true,
+        "shares_a_real_word_with_title": true
+      }
+    },
+    {
+      "kind": "finding",
+      "source": "k8s_engine/manifests/vulnerable",
+      "identifier": "K8S-CAP-01",
+      "severity": "HIGH",
+      "title": "Deployment/payment-service container 'payment-service' does not drop all Linux capabilities",
+      "narrative": "Deployment/payment-service container 'payment-service' does not drop all Linux capabilities. Why it matters: Containers get a broad default capability set unless the manifest explicitly drops it. Most workloads need none of the default set at all. If left as-is: An unnecessary default capability (e.g. CAP_NET_RAW, CAP_CHOWN) becomes one more tool available to an attacker who compromises the process. Fix: Add capabilities.drop: [\"ALL\"] and only capabilities.add the specific ones the workload actually requires, if any.",
+      "passed": true,
+      "checks": {
+        "nonempty_and_substantial": true,
+        "no_llm_error_fallback": true,
+        "no_forbidden_overclaim_language": true,
+        "no_contradicting_severity_word": true,
+        "shares_a_real_word_with_title": true
+      }
+    },
+    {
+      "kind": "finding",
+      "source": "k8s_engine/manifests/vulnerable",
+      "identifier": "K8S-NETPOL-01",
+      "severity": "MEDIUM",
+      "title": "Namespace 'app' has workloads but no NetworkPolicy",
+      "narrative": "Namespace 'app' has workloads but no NetworkPolicy. Why it matters: With no NetworkPolicy, Kubernetes' default is allow-all: every pod in the cluster can reach every pod in this namespace on any port, regardless of whether the service mesh's mTLS (modules/mesh) is proving who's calling. If left as-is: A compromised pod anywhere in the cluster \u2014 not just this namespace \u2014 can reach every workload here directly, enabling lateral movement the mesh's identity layer alone doesn't prevent. Fix: Add a default-deny-all NetworkPolicy for the namespace, then explicit allow rules scoped to each workload's real traffic pattern (see kubernetes/manifests/hardened/networkpolicy.yaml).",
+      "passed": true,
+      "checks": {
+        "nonempty_and_substantial": true,
+        "no_llm_error_fallback": true,
+        "no_forbidden_overclaim_language": true,
+        "no_contradicting_severity_word": true,
+        "shares_a_real_word_with_title": true
+      }
+    },
+    {
+      "kind": "finding",
+      "source": "k8s_engine/manifests/vulnerable",
+      "identifier": "K8S-RESOURCE-01",
+      "severity": "MEDIUM",
+      "title": "Deployment/notification-service container 'notification-service' has no cpu/memory limit",
+      "narrative": "Deployment/notification-service container 'notification-service' has no cpu/memory limit. Why it matters: Without resource limits, one runaway or compromised container can consume all available CPU/memory on its node, starving every other pod scheduled there. If left as-is: A single misbehaving or intentionally resource-exhausting container becomes a node-wide (and potentially cluster-wide, via rescheduling pressure) denial of service. Fix: Add resources.requests and resources.limits (both cpu and memory) sized to the workload's actual usage.",
+      "passed": true,
+      "checks": {
+        "nonempty_and_substantial": true,
+        "no_llm_error_fallback": true,
+        "no_forbidden_overclaim_language": true,
+        "no_contradicting_severity_word": true,
+        "shares_a_real_word_with_title": true
+      }
+    },
+    {
+      "kind": "finding",
+      "source": "k8s_engine/manifests/vulnerable",
+      "identifier": "K8S-RESOURCE-01",
+      "severity": "MEDIUM",
+      "title": "Deployment/payment-service container 'payment-service' has no cpu/memory limit",
+      "narrative": "Deployment/payment-service container 'payment-service' has no cpu/memory limit. Why it matters: Without resource limits, one runaway or compromised container can consume all available CPU/memory on its node, starving every other pod scheduled there. If left as-is: A single misbehaving or intentionally resource-exhausting container becomes a node-wide (and potentially cluster-wide, via rescheduling pressure) denial of service. Fix: Add resources.requests and resources.limits (both cpu and memory) sized to the workload's actual usage.",
+      "passed": true,
+      "checks": {
+        "nonempty_and_substantial": true,
+        "no_llm_error_fallback": true,
+        "no_forbidden_overclaim_language": true,
+        "no_contradicting_severity_word": true,
+        "shares_a_real_word_with_title": true
+      }
+    },
+    {
+      "kind": "finding",
+      "source": "k8s_engine/manifests/vulnerable",
+      "identifier": "K8S-IMAGE-01",
+      "severity": "MEDIUM",
+      "title": "Deployment/notification-service container 'notification-service' uses a mutable image reference (meridiantrustbank/notification-service:latest)",
+      "narrative": "Deployment/notification-service container 'notification-service' uses a mutable image reference (meridiantrustbank/notification-service:latest). Why it matters: ':latest' (or no tag at all) can point to different actual image content on different days, or even different content on the same tag if it gets re-pushed \u2014 there's no way to know exactly what code is running, or to roll back to a known-good build reliably. If left as-is: An attacker (or a mistake) that re-pushes the same tag changes what every future pod runs without any manifest change to review or audit. Fix: Pin the image to a specific version (and ideally a content digest, e.g. image@sha256:...) produced by CI, not a floating tag.",
+      "passed": true,
+      "checks": {
+        "nonempty_and_substantial": true,
+        "no_llm_error_fallback": true,
+        "no_forbidden_overclaim_language": true,
+        "no_contradicting_severity_word": true,
+        "shares_a_real_word_with_title": true
+      }
+    },
+    {
+      "kind": "finding",
+      "source": "k8s_engine/manifests/vulnerable",
+      "identifier": "K8S-IMAGE-01",
+      "severity": "MEDIUM",
+      "title": "Deployment/payment-service container 'payment-service' uses a mutable image reference (meridiantrustbank/payment-service:latest)",
+      "narrative": "Deployment/payment-service container 'payment-service' uses a mutable image reference (meridiantrustbank/payment-service:latest). Why it matters: ':latest' (or no tag at all) can point to different actual image content on different days, or even different content on the same tag if it gets re-pushed \u2014 there's no way to know exactly what code is running, or to roll back to a known-good build reliably. If left as-is: An attacker (or a mistake) that re-pushes the same tag changes what every future pod runs without any manifest change to review or audit. Fix: Pin the image to a specific version (and ideally a content digest, e.g. image@sha256:...) produced by CI, not a floating tag.",
+      "passed": true,
+      "checks": {
+        "nonempty_and_substantial": true,
+        "no_llm_error_fallback": true,
+        "no_forbidden_overclaim_language": true,
+        "no_contradicting_severity_word": true,
+        "shares_a_real_word_with_title": true
+      }
+    },
+    {
+      "kind": "finding",
+      "source": "drift/architecture-hardened-vs-drifted.json",
+      "identifier": "DRIFT-PUBLIC-NET-01",
+      "severity": "CRITICAL",
+      "title": "customer-storage drifted to allow public network access (baseline had it disabled)",
+      "narrative": "customer-storage drifted to allow public network access (baseline had it disabled). Why it matters: customer-storage's live configuration now allows public network access, but the last-known-good baseline it was provisioned with had this disabled \u2014 the resource was changed outside of, or after, the change that was actually reviewed. If left as-is: Direct exposure of a sensitive resource, introduced silently after go-live rather than caught at design time. Fix: Investigate who/what changed customer-storage's network exposure and revert to the baseline configuration; consider Azure Policy/Org Policy/AWS Config in enforce (not audit-only) mode to block this class of change going forward.",
+      "passed": true,
+      "checks": {
+        "nonempty_and_substantial": true,
+        "no_llm_error_fallback": true,
+        "no_forbidden_overclaim_language": true,
+        "no_contradicting_severity_word": true,
+        "shares_a_real_word_with_title": true
+      }
+    },
+    {
+      "kind": "finding",
+      "source": "drift/architecture-hardened-vs-drifted.json",
+      "identifier": "DRIFT-IAM-01",
+      "severity": "CRITICAL",
+      "title": "account-service's identity binding drifted from baseline",
+      "narrative": "account-service's identity binding drifted from baseline. Why it matters: account-service was provisioned with role='IAM-004-account-service-secrets-access' scope='resource'; the current snapshot shows role='Owner' scope='subscription'. If left as-is: An identity's actual permissions no longer match what was reviewed \u2014 the exact kind of change that should go through an access review, not happen silently. Fix: Confirm whether this was an approved change; if not, revert account-service's binding to the baseline role/scope and investigate how it changed.",
+      "passed": true,
+      "checks": {
+        "nonempty_and_substantial": true,
+        "no_llm_error_fallback": true,
+        "no_forbidden_overclaim_language": true,
+        "no_contradicting_severity_word": true,
+        "shares_a_real_word_with_title": true
+      }
+    },
+    {
+      "kind": "finding",
+      "source": "drift/architecture-hardened-vs-drifted.json",
+      "identifier": "DRIFT-DATA-ENC-01",
+      "severity": "HIGH",
+      "title": "key-vault drifted to no longer have encryption at rest",
+      "narrative": "key-vault drifted to no longer have encryption at rest. Why it matters: key-vault was provisioned with encryption at rest enabled; the current snapshot shows it disabled. If left as-is: Data at rest is now readable/tamperable by anyone with disk-level or backup access, without that ever having been reviewed as an intended change. Fix: Re-enable encryption at rest and investigate how/why it was disabled outside the reviewed baseline.",
+      "passed": true,
+      "checks": {
+        "nonempty_and_substantial": true,
+        "no_llm_error_fallback": true,
+        "no_forbidden_overclaim_language": true,
+        "no_contradicting_severity_word": true,
+        "shares_a_real_word_with_title": true
+      }
+    },
+    {
+      "kind": "finding",
+      "source": "drift/architecture-hardened-vs-drifted.json",
+      "identifier": "DRIFT-LOG-01",
+      "severity": "HIGH",
+      "title": "Centralized audit logging drifted from enabled to disabled",
+      "narrative": "Centralized audit logging drifted from enabled to disabled. Why it matters: Logging was on in the reviewed baseline and is off in the current snapshot \u2014 anything that changes after this point (including further drift) may go completely unrecorded. If left as-is: Total loss of forensic trail from this point forward; every other drift or intrusion after this one becomes harder or impossible to reconstruct. Fix: Re-enable diagnostic settings/audit logging immediately and treat this as a potential incident, not just a misconfiguration \u2014 investigate who disabled it and when.",
+      "passed": true,
+      "checks": {
+        "nonempty_and_substantial": true,
+        "no_llm_error_fallback": true,
+        "no_forbidden_overclaim_language": true,
+        "no_contradicting_severity_word": true,
+        "shares_a_real_word_with_title": true
+      }
+    },
+    {
+      "kind": "finding",
+      "source": "drift/architecture-hardened-vs-drifted.json",
+      "identifier": "DRIFT-ASSET-ADDED-01",
+      "severity": "HIGH",
+      "title": "debug-endpoint appears in the current snapshot but not in the reviewed baseline",
+      "narrative": "debug-endpoint appears in the current snapshot but not in the reviewed baseline. Why it matters: debug-endpoint (type=api) exists in the live/current configuration with no corresponding entry in the last reviewed baseline \u2014 either an out-of-band provisioning action or a baseline that's fallen out of date. If left as-is: An unreviewed resource in the environment \u2014 potentially a legitimate change nobody updated the baseline for, or a genuinely unauthorized/shadow resource. Either way, nobody has assessed its security posture. Fix: Confirm whether debug-endpoint was an approved change. If yes, update the baseline architecture.json to include it and run the threat-modelling agent against the updated design. If no, treat this as a potential incident.",
+      "passed": true,
+      "checks": {
+        "nonempty_and_substantial": true,
+        "no_llm_error_fallback": true,
+        "no_forbidden_overclaim_language": true,
+        "no_contradicting_severity_word": true,
+        "shares_a_real_word_with_title": true
+      }
+    },
+    {
+      "kind": "finding",
+      "source": "drift/architecture-hardened-vs-drifted.json",
+      "identifier": "DRIFT-ZT-01",
+      "severity": "MEDIUM",
+      "title": "Authentication drifted off on api-gateway \u2192 account-service",
+      "narrative": "Authentication drifted off on api-gateway \u2192 account-service. Why it matters: api-gateway \u2192 account-service was mutually authenticated in the baseline; the current snapshot shows it is not. If left as-is: Zero Trust protection on this path has silently regressed \u2014 anything reachable on the network path can now impersonate the legitimate caller. Fix: Investigate the mesh/gateway configuration on this path for a dropped PeerAuthentication policy or misconfigured sidecar, and restore mutual authentication.",
+      "passed": true,
+      "checks": {
+        "nonempty_and_substantial": true,
+        "no_llm_error_fallback": true,
+        "no_forbidden_overclaim_language": true,
+        "no_contradicting_severity_word": true,
+        "shares_a_real_word_with_title": true
+      }
+    },
+    {
+      "kind": "finding",
+      "source": "drift/architecture-hardened-vs-drifted.json",
+      "identifier": "DRIFT-ASSET-REMOVED-01",
+      "severity": "MEDIUM",
+      "title": "notification-service is in the reviewed baseline but missing from the current snapshot",
+      "narrative": "notification-service is in the reviewed baseline but missing from the current snapshot. Why it matters: notification-service (type=compute) was part of the last reviewed baseline and no longer appears in the current configuration. If left as-is: Either a legitimate decommission the baseline hasn't caught up with yet, or an unexpected/unauthorized deletion \u2014 for a logging or data asset specifically, deletion can itself be an attempt to remove evidence. Fix: Confirm whether notification-service's removal was intentional. If yes, update the baseline architecture.json to drop it. If no, treat this as a potential incident \u2014 especially if notification-service handled logging or sensitive data.",
+      "passed": true,
+      "checks": {
+        "nonempty_and_substantial": true,
+        "no_llm_error_fallback": true,
+        "no_forbidden_overclaim_language": true,
+        "no_contradicting_severity_word": true,
+        "shares_a_real_word_with_title": true
+      }
+    },
+    {
+      "kind": "alert",
+      "source": "detection_engine/logs-multi-stage-incident.json",
+      "identifier": "DET-BRUTEFORCE-01",
+      "severity": "CRITICAL",
+      "title": "5 failed logins for k.doran from 185.220.101.4, followed by a success",
+      "narrative": "5 failed logins for k.doran from 185.220.101.4, followed by a success. What happened: 5 consecutive authentication failures for k.doran from 185.220.101.4, then a successful login from the same IP \u2014 consistent with a guessed or stuffed credential that worked. Why it matters: Likely account takeover \u2014 treat the account as compromised until verified otherwise. Recommended action: Force a password/credential reset, review MFA status, and rate-limit or block the source IP.",
+      "passed": true,
+      "checks": {
+        "nonempty_and_substantial": true,
+        "no_llm_error_fallback": true,
+        "no_forbidden_overclaim_language": true,
+        "no_contradicting_severity_word": true,
+        "shares_a_real_word_with_title": true
+      }
+    },
+    {
+      "kind": "alert",
+      "source": "detection_engine/logs-multi-stage-incident.json",
+      "identifier": "DET-EXFIL-01",
+      "severity": "CRITICAL",
+      "title": "k.doran transferred 950 MB from customer-storage",
+      "narrative": "k.doran transferred 950 MB from customer-storage. What happened: k.doran moved 950 MB out of customer-storage in a single transfer at 2026-09-17T01:31:47Z \u2014 well above the 500 MB baseline for normal activity. Why it matters: Large single-transfer volumes from a sensitive store are the single strongest signal of bulk data exfiltration, insider or external. Recommended action: Suspend k.doran's active sessions pending review, and confirm the transfer against a known, approved business process.",
+      "passed": true,
+      "checks": {
+        "nonempty_and_substantial": true,
+        "no_llm_error_fallback": true,
+        "no_forbidden_overclaim_language": true,
+        "no_contradicting_severity_word": true,
+        "shares_a_real_word_with_title": true
+      }
+    },
+    {
+      "kind": "alert",
+      "source": "detection_engine/logs-multi-stage-incident.json",
+      "identifier": "DET-LOGTAMPER-01",
+      "severity": "CRITICAL",
+      "title": "k.doran disabled audit logging on log-workspace",
+      "narrative": "k.doran disabled audit logging on log-workspace. What happened: k.doran disabled logging on log-workspace at 2026-09-17T01:40:02Z. Why it matters: Tampering with the audit trail is a near-universal signal of an active, deliberate attack \u2014 it removes the evidence needed to investigate everything else. Recommended action: Treat as an active incident immediately: re-enable/restore logging, isolate k.doran's credentials, and escalate \u2014 do not wait for corroborating alerts.",
+      "passed": true,
+      "checks": {
+        "nonempty_and_substantial": true,
+        "no_llm_error_fallback": true,
+        "no_forbidden_overclaim_language": true,
+        "no_contradicting_severity_word": true,
+        "shares_a_real_word_with_title": true
+      }
+    },
+    {
+      "kind": "alert",
+      "source": "detection_engine/logs-multi-stage-incident.json",
+      "identifier": "DET-PRIVESC-01",
+      "severity": "HIGH",
+      "title": "After-hours privilege change by k.doran on secrets-manager-role",
+      "narrative": "After-hours privilege change by k.doran on secrets-manager-role. What happened: k.doran granted/changed permissions on secrets-manager-role at 2026-09-17T01:22:10Z (outside 06:00-22:00 UTC business hours). Why it matters: Off-hours IAM changes to sensitive resources are a common early step in both insider misuse and post-compromise privilege escalation. Recommended action: Confirm this change against an approved change ticket; if none exists, revert it and investigate k.doran.",
+      "passed": true,
+      "checks": {
+        "nonempty_and_substantial": true,
+        "no_llm_error_fallback": true,
+        "no_forbidden_overclaim_language": true,
+        "no_contradicting_severity_word": true,
+        "shares_a_real_word_with_title": true
+      }
+    }
+  ]
+}

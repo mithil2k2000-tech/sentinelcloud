@@ -1,0 +1,42 @@
+flowchart TB
+    UT["1. unit-tests<br/>(269 pytest tests)"]
+
+    subgraph GATES["Real deployment gates — CAN block a merge"]
+        TMG["4. threat-model-gate<br/>(3-cloud matrix, --fail-on HIGH)"]
+        K8G["5. k8s-manifest-gate<br/>(hardened manifests, --fail-on HIGH)"]
+    end
+
+    TV["2. terraform-validate<br/>(3-cloud matrix)"]
+    OPA["3. opa-policy-test<br/>(22 Rego tests)"]
+
+    subgraph NONGATING["Non-gating — always exit 0, post to job summary"]
+        DET["6. detection-engine-demo"]
+        DRIFT["7. drift-detection-demo"]
+        COMP["8. compliance-audit-report"]
+        CLOG["9. centralized-logging-demo"]
+        DEMO["11. demo-walkthrough"]
+    end
+
+    subgraph OWNPASSFAIL["Own pass/fail — CANNOT block a deployment (SR-4a)"]
+        EVAL["10. agent-eval-benchmark<br/>(exit code CAN fail)"]
+    end
+
+    UT --> TMG
+    UT --> K8G
+    UT --> DET
+    UT --> DRIFT
+    UT --> COMP
+    UT --> CLOG
+    UT --> EVAL
+    UT --> DEMO
+
+    TV -.independent, no needs:.-> TMG
+    OPA -.independent, no needs:.-> TMG
+
+    EVAL -. "no needs: edge to either gate — SR-4a" .-x TMG
+    EVAL -. "no needs: edge to either gate — SR-4a" .-x K8G
+
+    style GATES fill:#f8d7da,stroke:#842029
+    style OWNPASSFAIL fill:#fff3cd,stroke:#997404
+    style NONGATING fill:#e2e3e5,stroke:#41464b
+    style EVAL fill:#fff3cd,stroke:#997404

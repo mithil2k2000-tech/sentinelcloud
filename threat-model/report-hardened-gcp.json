@@ -1,0 +1,54 @@
+{
+  "architecture": "Mobile Banking App \u2014 as implemented in terraform/gcp (Phase 1 scaffold)",
+  "summary": {
+    "overall_risk": "MEDIUM",
+    "counts": {
+      "LOW": 0,
+      "MEDIUM": 1,
+      "HIGH": 0,
+      "CRITICAL": 0
+    },
+    "fail_on": "HIGH",
+    "deployment": "ALLOWED"
+  },
+  "findings": [
+    {
+      "rule_id": "NET-WAF-01",
+      "category": "Denial of Service",
+      "severity": "MEDIUM",
+      "assets": [
+        "api-gateway"
+      ],
+      "finding": "api-gateway has no WAF/rate-limiting in front of it",
+      "threat": "api-gateway is directly internet-facing with no layer-7 filtering \u2014 vulnerable to L7 DoS and common injection patterns hitting the app directly.",
+      "impact": "Availability risk and a missing layer of defense against common web attacks.",
+      "control": "NET-003",
+      "policy": "api-gateway must sit behind a WAF (Azure Application Gateway/Front Door WAF policy).",
+      "mitigation": "Deploy Azure Front Door or Application Gateway with a WAF policy in front of the gateway subnet.",
+      "status": "FAIL"
+    }
+  ],
+  "compliance": [
+    {
+      "control_id": "NET-003",
+      "reference_only": true,
+      "label": "(reference only, not a certification)",
+      "mapped": true,
+      "description": "WAF / rate-limiting in front of an internet-facing gateway (NET-WAF-01)",
+      "frameworks": {
+        "cis_v8": {
+          "control": "13.10",
+          "title": "Perform Application Layer Filtering"
+        },
+        "nist_csf_2": {
+          "control": "PR.IR-01",
+          "title": "Networks and environments are protected from unauthorized logical access and usage"
+        },
+        "pci_dss_v4": {
+          "control": "6.4.2",
+          "title": "An automated technical solution (e.g. a WAF) is deployed to detect and prevent web-based attacks"
+        }
+      }
+    }
+  ]
+}

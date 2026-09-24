@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-service
+  namespace: app
+  labels:
+    app: notification-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: notification-service
+  template:
+    metadata:
+      labels:
+        app: notification-service
+    spec:
+      serviceAccountName: notification-service
+      containers:
+        - name: notification-service
+          image: meridiantrustbank/notification-service:1.0.7
+          ports:
+            - containerPort: 8082
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10003
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          env:
+            - name: SERVICE_NAME
+              value: notification-service

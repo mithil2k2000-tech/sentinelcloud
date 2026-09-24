@@ -1,0 +1,14 @@
+[package]
+name = "rego-test-runner"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+regorus = "0.12"
+regex = "1"
+anyhow = "1"
+walkdir = "2"
+
+[[bin]]
+name = "rego-test-runner"
+path = "src/main.rs"

@@ -1,0 +1,5 @@
+{
+  "events": [
+    { "event_id": "evt-501", "timestamp": "2026-09-16T13:12:44Z", "event_type": "data_transfer", "principal": "n.abara", "source_ip": "10.20.8.6", "target": "customer-storage", "outcome": "success", "bytes_transferred": 812000000 }
+  ]
+}

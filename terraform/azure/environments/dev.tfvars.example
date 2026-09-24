@@ -1,0 +1,16 @@
+project_name = "csp"
+environment  = "dev"
+location     = "uksouth"
+
+address_space = "10.20.0.0/16"
+
+# Set this to your actual admin/office IP range before applying — never
+# leave it empty in anything other than a fully air-gapped sandbox, and
+# NEVER set it to 0.0.0.0/0.
+allowed_admin_cidrs = ["203.0.113.0/29"]
+
+tags = {
+  project     = "cloud-security-platform"
+  environment = "dev"
+  managed-by  = "terraform"
+}

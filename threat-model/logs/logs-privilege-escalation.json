@@ -1,0 +1,5 @@
+{
+  "events": [
+    { "event_id": "evt-401", "timestamp": "2026-09-16T23:47:12Z", "event_type": "iam_change", "principal": "t.walsh", "source_ip": "10.20.12.9", "target": "payment-service-role", "outcome": "success" }
+  ]
+}

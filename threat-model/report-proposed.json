@@ -1,0 +1,224 @@
+{
+  "architecture": "Mobile Banking App \u2014 first-draft proposal (as submitted by engineering, pre-review)",
+  "summary": {
+    "overall_risk": "CRITICAL",
+    "counts": {
+      "LOW": 0,
+      "MEDIUM": 4,
+      "HIGH": 3,
+      "CRITICAL": 6
+    },
+    "fail_on": "HIGH",
+    "deployment": "BLOCKED"
+  },
+  "findings": [
+    {
+      "rule_id": "IAM-BROAD-01",
+      "category": "Elevation of Privilege",
+      "severity": "CRITICAL",
+      "assets": [
+        "payment-service"
+      ],
+      "finding": "payment-service \u2192 subscription-wide Contributor role",
+      "threat": "A compromised payment-service container/process could use its Contributor role to read, modify, or delete ANY resource in the subscription \u2014 not just the ones it actually needs.",
+      "impact": "Full subscription compromise from a single workload breach.",
+      "control": "IAM-004",
+      "policy": "payment-service may hold only a purpose-scoped custom role, never Owner/Contributor.",
+      "mitigation": "Replace with a custom role scoped to exactly the resource(s) payment-service needs (see modules/iam's custom role_definition pattern).",
+      "status": "FAIL"
+    },
+    {
+      "rule_id": "IAM-BROAD-01",
+      "category": "Elevation of Privilege",
+      "severity": "CRITICAL",
+      "assets": [
+        "account-service"
+      ],
+      "finding": "account-service \u2192 subscription-wide Contributor role",
+      "threat": "A compromised account-service container/process could use its Contributor role to read, modify, or delete ANY resource in the subscription \u2014 not just the ones it actually needs.",
+      "impact": "Full subscription compromise from a single workload breach.",
+      "control": "IAM-004",
+      "policy": "account-service may hold only a purpose-scoped custom role, never Owner/Contributor.",
+      "mitigation": "Replace with a custom role scoped to exactly the resource(s) account-service needs (see modules/iam's custom role_definition pattern).",
+      "status": "FAIL"
+    },
+    {
+      "rule_id": "NET-PUBLIC-01",
+      "category": "Information Disclosure",
+      "severity": "CRITICAL",
+      "assets": [
+        "customer-db"
+      ],
+      "finding": "customer-db allows public network access",
+      "threat": "customer-db is reachable directly from the internet, bypassing every network control.",
+      "impact": "Direct exposure of customer data to internet-wide scanning and exploitation.",
+      "control": "NET-001",
+      "policy": "customer-db must disable public network access and be reachable only via private endpoint.",
+      "mitigation": "Set public_network_access_enabled = false and add a private endpoint in the data subnet.",
+      "status": "FAIL"
+    },
+    {
+      "rule_id": "NET-PUBLIC-01",
+      "category": "Information Disclosure",
+      "severity": "CRITICAL",
+      "assets": [
+        "customer-storage"
+      ],
+      "finding": "customer-storage allows public network access",
+      "threat": "customer-storage is reachable directly from the internet, bypassing every network control.",
+      "impact": "Direct exposure of customer data to internet-wide scanning and exploitation.",
+      "control": "NET-001",
+      "policy": "customer-storage must disable public network access and be reachable only via private endpoint.",
+      "mitigation": "Set public_network_access_enabled = false and add a private endpoint in the data subnet.",
+      "status": "FAIL"
+    },
+    {
+      "rule_id": "NET-PUBLIC-02",
+      "category": "Information Disclosure",
+      "severity": "CRITICAL",
+      "assets": [
+        "customer-storage"
+      ],
+      "finding": "customer-storage allows public blob/container access",
+      "threat": "Any container in customer-storage could be individually set to public, exposing its contents with a URL.",
+      "impact": "Silent data exposure \u2014 no network log will show it as unusual, it's 'working as configured'.",
+      "control": "NET-001",
+      "policy": "customer-storage must set allow_nested_items_to_be_public = false.",
+      "mitigation": "Disable public nested-item access at the account level so no container can opt in later.",
+      "status": "FAIL"
+    },
+    {
+      "rule_id": "NET-SEGMENT-01",
+      "category": "Elevation of Privilege",
+      "severity": "CRITICAL",
+      "assets": [
+        "api-gateway",
+        "payment-service",
+        "account-service",
+        "notification-service",
+        "customer-db",
+        "customer-storage"
+      ],
+      "finding": "No network segmentation in trust boundary 'flat'",
+      "threat": "Compute workloads and sensitive data stores share one flat network zone. A single compromised container can reach every data store here directly \u2014 this is the exact 'payment service \u2192 unrestricted database access' pattern.",
+      "impact": "Lateral movement from any one compromised service to all sensitive data.",
+      "control": "IAM-004",
+      "policy": "Compute and sensitive-data tiers must sit in separate subnets with NSGs restricting cross-tier traffic to the minimum required.",
+      "mitigation": "Split into dedicated subnets (see modules/network's gateway/aks/data/mgmt layout) with deny-by-default NSGs.",
+      "status": "FAIL"
+    },
+    {
+      "rule_id": "DATA-ENC-01",
+      "category": "Tampering",
+      "severity": "HIGH",
+      "assets": [
+        "customer-db"
+      ],
+      "finding": "customer-db has no encryption at rest",
+      "threat": "Data in customer-db is readable/tamperable by anyone with disk-level or backup access.",
+      "impact": "Regulatory exposure (data protection requirements) plus tampering risk on backups/snapshots.",
+      "control": "DATA-002",
+      "policy": "customer-db must have infrastructure/double encryption enabled.",
+      "mitigation": "Enable encryption at rest (see the require-encryption-at-rest Azure Policy in modules/policy).",
+      "status": "FAIL"
+    },
+    {
+      "rule_id": "DATA-ENC-01",
+      "category": "Tampering",
+      "severity": "HIGH",
+      "assets": [
+        "customer-storage"
+      ],
+      "finding": "customer-storage has no encryption at rest",
+      "threat": "Data in customer-storage is readable/tamperable by anyone with disk-level or backup access.",
+      "impact": "Regulatory exposure (data protection requirements) plus tampering risk on backups/snapshots.",
+      "control": "DATA-002",
+      "policy": "customer-storage must have infrastructure/double encryption enabled.",
+      "mitigation": "Enable encryption at rest (see the require-encryption-at-rest Azure Policy in modules/policy).",
+      "status": "FAIL"
+    },
+    {
+      "rule_id": "LOG-001",
+      "category": "Repudiation",
+      "severity": "HIGH",
+      "assets": [
+        "mobile-app",
+        "api-gateway",
+        "payment-service",
+        "account-service",
+        "notification-service",
+        "customer-db",
+        "customer-storage"
+      ],
+      "finding": "No centralized audit logging configured",
+      "threat": "Without diagnostic logs flowing to a central workspace, there's no way to reconstruct what happened after an incident, or prove who did what.",
+      "impact": "Undetectable breaches and no forensic trail \u2014 also a compliance gap (most frameworks require audit logging).",
+      "control": "LOG-001",
+      "policy": "All resources must send diagnostic logs to a central Log Analytics workspace.",
+      "mitigation": "Wire up diagnostic settings + a Log Analytics workspace (Phase 9 \u2014 SIEM + Detection, not yet built).",
+      "status": "FAIL"
+    },
+    {
+      "rule_id": "IAM-MISSING-01",
+      "category": "Spoofing",
+      "severity": "MEDIUM",
+      "assets": [
+        "notification-service"
+      ],
+      "finding": "notification-service has no dedicated identity/role",
+      "threat": "notification-service reaches sensitive data with no assigned identity. In practice this gets worked around with a shared service account, an ambient credential, or a manually-granted broad role \u2014 all worse than a scoped one from the start.",
+      "impact": "No way to attribute or limit this workload's access; likely over-privileged in practice.",
+      "control": "IAM-004",
+      "policy": "notification-service must have its own purpose-scoped identity before going live.",
+      "mitigation": "Create a dedicated app registration/service principal and custom role for notification-service, matching payment-service's pattern.",
+      "status": "FAIL"
+    },
+    {
+      "rule_id": "AUTHN-FLOW-01",
+      "category": "Spoofing",
+      "severity": "MEDIUM",
+      "assets": [
+        "api-gateway",
+        "payment-service"
+      ],
+      "finding": "No application-layer authentication: api-gateway \u2192 payment-service",
+      "threat": "Network reachability from api-gateway to payment-service exists, but there's no app-layer proof of identity (mTLS/OAuth/service-mesh token) \u2014 anything else that lands in the same subnet can impersonate the caller.",
+      "impact": "Any workload placed in the same network path can call this service as if it were the legitimate caller.",
+      "control": "ZT-001",
+      "policy": "Traffic into payment-service must be mutually authenticated, not just network-reachable.",
+      "mitigation": "Introduce a service mesh (mTLS) or OAuth token validation between gateway and services (Phase 4 \u2014 Zero Trust).",
+      "status": "FAIL"
+    },
+    {
+      "rule_id": "AUTHN-FLOW-01",
+      "category": "Spoofing",
+      "severity": "MEDIUM",
+      "assets": [
+        "api-gateway",
+        "account-service"
+      ],
+      "finding": "No application-layer authentication: api-gateway \u2192 account-service",
+      "threat": "Network reachability from api-gateway to account-service exists, but there's no app-layer proof of identity (mTLS/OAuth/service-mesh token) \u2014 anything else that lands in the same subnet can impersonate the caller.",
+      "impact": "Any workload placed in the same network path can call this service as if it were the legitimate caller.",
+      "control": "ZT-001",
+      "policy": "Traffic into account-service must be mutually authenticated, not just network-reachable.",
+      "mitigation": "Introduce a service mesh (mTLS) or OAuth token validation between gateway and services (Phase 4 \u2014 Zero Trust).",
+      "status": "FAIL"
+    },
+    {
+      "rule_id": "NET-WAF-01",
+      "category": "Denial of Service",
+      "severity": "MEDIUM",
+      "assets": [
+        "api-gateway"
+      ],
+      "finding": "api-gateway has no WAF/rate-limiting in front of it",
+      "threat": "api-gateway is directly internet-facing with no layer-7 filtering \u2014 vulnerable to L7 DoS and common injection patterns hitting the app directly.",
+      "impact": "Availability risk and a missing layer of defense against common web attacks.",
+      "control": "NET-003",
+      "policy": "api-gateway must sit behind a WAF (Azure Application Gateway/Front Door WAF policy).",
+      "mitigation": "Deploy Azure Front Door or Application Gateway with a WAF policy in front of the gateway subnet.",
+      "status": "FAIL"
+    }
+  ]
+}

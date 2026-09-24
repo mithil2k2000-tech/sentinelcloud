@@ -1,0 +1,122 @@
+# Fixed: default-deny for the app namespace, then explicit allows —
+# the Kubernetes-native network segmentation the vulnerable/ set has none
+# of at all. This is the in-cluster counterpart to the NSG/firewall
+# segmentation Terraform's modules/network already does between subnets;
+# without this, every pod in the namespace can reach every other pod
+# directly regardless of what the service mesh's mTLS proves about
+# identity — mTLS authenticates who's calling, a NetworkPolicy limits who
+# is allowed to call at all.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: app
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns-egress
+  namespace: app
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+---
+# Sidecar-to-control-plane traffic (istiod) and the reverse — required
+# for the mesh itself (modules/mesh) to function once NetworkPolicy is
+# default-deny.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-istio-system
+  namespace: app
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: istio-system
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: istio-system
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-gateway-to-payment-service
+  namespace: app
+spec:
+  podSelector:
+    matchLabels:
+      app: payment-service
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: istio-system
+      ports:
+        - protocol: TCP
+          port: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-gateway-to-account-service
+  namespace: app
+spec:
+  podSelector:
+    matchLabels:
+      app: account-service
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: istio-system
+      ports:
+        - protocol: TCP
+          port: 8081
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-gateway-to-notification-service
+  namespace: app
+spec:
+  podSelector:
+    matchLabels:
+      app: notification-service
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: istio-system
+      ports:
+        - protocol: TCP
+          port: 8082

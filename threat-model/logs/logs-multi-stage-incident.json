@@ -1,0 +1,14 @@
+{
+  "_narrative": "Demo scenario, all synthetic: one compromised account (k.doran) guesses its way in, escalates its own privileges after hours, exfiltrates a large volume of customer data, then disables logging to cover its tracks — the same four detection rules that fire in isolation in the other fixtures here, correlated into one incident under a single principal/source_ip. This is the detection-layer counterpart to threat-model/architecture-proposed.json's 'before hardening' demo (v1 spec §19): it shows why the four rules exist together, not just individually.",
+  "events": [
+    { "event_id": "evt-701", "timestamp": "2026-09-17T01:14:00Z", "event_type": "auth", "principal": "k.doran", "source_ip": "185.220.101.4", "target": "api-gateway", "outcome": "failure" },
+    { "event_id": "evt-702", "timestamp": "2026-09-17T01:14:05Z", "event_type": "auth", "principal": "k.doran", "source_ip": "185.220.101.4", "target": "api-gateway", "outcome": "failure" },
+    { "event_id": "evt-703", "timestamp": "2026-09-17T01:14:10Z", "event_type": "auth", "principal": "k.doran", "source_ip": "185.220.101.4", "target": "api-gateway", "outcome": "failure" },
+    { "event_id": "evt-704", "timestamp": "2026-09-17T01:14:15Z", "event_type": "auth", "principal": "k.doran", "source_ip": "185.220.101.4", "target": "api-gateway", "outcome": "failure" },
+    { "event_id": "evt-705", "timestamp": "2026-09-17T01:14:20Z", "event_type": "auth", "principal": "k.doran", "source_ip": "185.220.101.4", "target": "api-gateway", "outcome": "failure" },
+    { "event_id": "evt-706", "timestamp": "2026-09-17T01:14:25Z", "event_type": "auth", "principal": "k.doran", "source_ip": "185.220.101.4", "target": "api-gateway", "outcome": "success" },
+    { "event_id": "evt-707", "timestamp": "2026-09-17T01:22:10Z", "event_type": "iam_change", "principal": "k.doran", "source_ip": "185.220.101.4", "target": "secrets-manager-role", "outcome": "success" },
+    { "event_id": "evt-708", "timestamp": "2026-09-17T01:31:47Z", "event_type": "data_transfer", "principal": "k.doran", "source_ip": "185.220.101.4", "target": "customer-storage", "outcome": "success", "bytes_transferred": 950000000 },
+    { "event_id": "evt-709", "timestamp": "2026-09-17T01:40:02Z", "event_type": "logging_disabled", "principal": "k.doran", "source_ip": "185.220.101.4", "target": "log-workspace", "outcome": "success" }
+  ]
+}

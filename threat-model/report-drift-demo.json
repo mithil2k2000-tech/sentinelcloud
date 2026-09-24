@@ -1,0 +1,258 @@
+{
+  "baseline": "../threat-model/architecture-hardened.json",
+  "current": "../threat-model/architecture-drifted.json",
+  "summary": {
+    "overall_risk": "CRITICAL",
+    "counts": {
+      "LOW": 0,
+      "MEDIUM": 2,
+      "HIGH": 3,
+      "CRITICAL": 2
+    },
+    "fail_on": "HIGH",
+    "deployment": "BLOCKED"
+  },
+  "findings": [
+    {
+      "rule_id": "DRIFT-PUBLIC-NET-01",
+      "category": "Tampering",
+      "severity": "CRITICAL",
+      "assets": [
+        "customer-storage"
+      ],
+      "finding": "customer-storage drifted to allow public network access (baseline had it disabled)",
+      "threat": "customer-storage's live configuration now allows public network access, but the last-known-good baseline it was provisioned with had this disabled \u2014 the resource was changed outside of, or after, the change that was actually reviewed.",
+      "impact": "Direct exposure of a sensitive resource, introduced silently after go-live rather than caught at design time.",
+      "control": "NET-001",
+      "policy": "customer-storage must not regain public exposure after being provisioned without it.",
+      "mitigation": "Investigate who/what changed customer-storage's network exposure and revert to the baseline configuration; consider Azure Policy/Org Policy/AWS Config in enforce (not audit-only) mode to block this class of change going forward.",
+      "status": "FAIL"
+    },
+    {
+      "rule_id": "DRIFT-IAM-01",
+      "category": "Tampering",
+      "severity": "CRITICAL",
+      "assets": [
+        "account-service"
+      ],
+      "finding": "account-service's identity binding drifted from baseline",
+      "threat": "account-service was provisioned with role='IAM-004-account-service-secrets-access' scope='resource'; the current snapshot shows role='Owner' scope='subscription'.",
+      "impact": "An identity's actual permissions no longer match what was reviewed \u2014 the exact kind of change that should go through an access review, not happen silently.",
+      "control": "IAM-004",
+      "policy": "account-service's role/scope must not change outside a reviewed access-control change.",
+      "mitigation": "Confirm whether this was an approved change; if not, revert account-service's binding to the baseline role/scope and investigate how it changed.",
+      "status": "FAIL"
+    },
+    {
+      "rule_id": "DRIFT-DATA-ENC-01",
+      "category": "Tampering",
+      "severity": "HIGH",
+      "assets": [
+        "key-vault"
+      ],
+      "finding": "key-vault drifted to no longer have encryption at rest",
+      "threat": "key-vault was provisioned with encryption at rest enabled; the current snapshot shows it disabled.",
+      "impact": "Data at rest is now readable/tamperable by anyone with disk-level or backup access, without that ever having been reviewed as an intended change.",
+      "control": "DATA-002",
+      "policy": "key-vault must keep encryption at rest enabled at all times, not just at provisioning.",
+      "mitigation": "Re-enable encryption at rest and investigate how/why it was disabled outside the reviewed baseline.",
+      "status": "FAIL"
+    },
+    {
+      "rule_id": "DRIFT-LOG-01",
+      "category": "Tampering",
+      "severity": "HIGH",
+      "assets": [
+        "mobile-app",
+        "api-gateway",
+        "payment-service",
+        "account-service",
+        "key-vault",
+        "customer-storage",
+        "log-workspace",
+        "debug-endpoint"
+      ],
+      "finding": "Centralized audit logging drifted from enabled to disabled",
+      "threat": "Logging was on in the reviewed baseline and is off in the current snapshot \u2014 anything that changes after this point (including further drift) may go completely unrecorded.",
+      "impact": "Total loss of forensic trail from this point forward; every other drift or intrusion after this one becomes harder or impossible to reconstruct.",
+      "control": "LOG-001",
+      "policy": "Centralized audit logging must remain enabled at all times once provisioned; disabling it is itself a reportable security event, not routine configuration.",
+      "mitigation": "Re-enable diagnostic settings/audit logging immediately and treat this as a potential incident, not just a misconfiguration \u2014 investigate who disabled it and when.",
+      "status": "FAIL"
+    },
+    {
+      "rule_id": "DRIFT-ASSET-ADDED-01",
+      "category": "Tampering",
+      "severity": "HIGH",
+      "assets": [
+        "debug-endpoint"
+      ],
+      "finding": "debug-endpoint appears in the current snapshot but not in the reviewed baseline",
+      "threat": "debug-endpoint (type=api) exists in the live/current configuration with no corresponding entry in the last reviewed baseline \u2014 either an out-of-band provisioning action or a baseline that's fallen out of date.",
+      "impact": "An unreviewed resource in the environment \u2014 potentially a legitimate change nobody updated the baseline for, or a genuinely unauthorized/shadow resource. Either way, nobody has assessed its security posture.",
+      "control": "DRIFT-001",
+      "policy": "Every asset in the live environment must correspond to an entry in the reviewed architecture baseline; new assets must go through the same review as everything else.",
+      "mitigation": "Confirm whether debug-endpoint was an approved change. If yes, update the baseline architecture.json to include it and run the threat-modelling agent against the updated design. If no, treat this as a potential incident.",
+      "status": "FAIL"
+    },
+    {
+      "rule_id": "DRIFT-ZT-01",
+      "category": "Tampering",
+      "severity": "MEDIUM",
+      "assets": [
+        "api-gateway",
+        "account-service"
+      ],
+      "finding": "Authentication drifted off on api-gateway \u2192 account-service",
+      "threat": "api-gateway \u2192 account-service was mutually authenticated in the baseline; the current snapshot shows it is not.",
+      "impact": "Zero Trust protection on this path has silently regressed \u2014 anything reachable on the network path can now impersonate the legitimate caller.",
+      "control": "ZT-001",
+      "policy": "Traffic into account-service must remain mutually authenticated at all times, not just at provisioning.",
+      "mitigation": "Investigate the mesh/gateway configuration on this path for a dropped PeerAuthentication policy or misconfigured sidecar, and restore mutual authentication.",
+      "status": "FAIL"
+    },
+    {
+      "rule_id": "DRIFT-ASSET-REMOVED-01",
+      "category": "Tampering",
+      "severity": "MEDIUM",
+      "assets": [
+        "notification-service"
+      ],
+      "finding": "notification-service is in the reviewed baseline but missing from the current snapshot",
+      "threat": "notification-service (type=compute) was part of the last reviewed baseline and no longer appears in the current configuration.",
+      "impact": "Either a legitimate decommission the baseline hasn't caught up with yet, or an unexpected/unauthorized deletion \u2014 for a logging or data asset specifically, deletion can itself be an attempt to remove evidence.",
+      "control": "DRIFT-001",
+      "policy": "An asset's removal from the live environment must be a reviewed, intentional change reflected back into the baseline, not a silent disappearance.",
+      "mitigation": "Confirm whether notification-service's removal was intentional. If yes, update the baseline architecture.json to drop it. If no, treat this as a potential incident \u2014 especially if notification-service handled logging or sensitive data.",
+      "status": "FAIL"
+    }
+  ],
+  "compliance": [
+    {
+      "control_id": "NET-001",
+      "reference_only": true,
+      "label": "(reference only, not a certification)",
+      "mapped": true,
+      "description": "No public network exposure of a sensitive resource (NET-PUBLIC-01/02)",
+      "frameworks": {
+        "cis_v8": {
+          "control": "12.2",
+          "title": "Establish and Maintain a Secure Network Architecture"
+        },
+        "nist_csf_2": {
+          "control": "PR.IR-01",
+          "title": "Networks and environments are protected from unauthorized logical access and usage"
+        },
+        "pci_dss_v4": {
+          "control": "1.4.1",
+          "title": "Network Security Controls between trusted and untrusted networks are implemented"
+        }
+      }
+    },
+    {
+      "control_id": "IAM-004",
+      "reference_only": true,
+      "label": "(reference only, not a certification)",
+      "mapped": true,
+      "description": "Least-privilege identity scoping and network segmentation (reused by IAM-BROAD-01/02, IAM-MISSING-01, and NET-SEGMENT-01 in threat_engine.py \u2014 see the note on shared control_ids below)",
+      "frameworks": {
+        "cis_v8": {
+          "control": "6.8",
+          "title": "Define and Maintain Role-Based Access Control"
+        },
+        "nist_csf_2": {
+          "control": "PR.AA-05",
+          "title": "Access permissions, entitlements, and authorizations are defined in a policy, managed, enforced, and reviewed, and incorporate the principles of least privilege and separation of duties"
+        },
+        "pci_dss_v4": {
+          "control": "7.2.1",
+          "title": "An access control model is defined and includes appropriate assignment of privileges based on job classification and function, least privileges, and need to know"
+        }
+      }
+    },
+    {
+      "control_id": "DATA-002",
+      "reference_only": true,
+      "label": "(reference only, not a certification)",
+      "mapped": true,
+      "description": "Encryption at rest for sensitive data stores (DATA-ENC-01)",
+      "frameworks": {
+        "cis_v8": {
+          "control": "3.11",
+          "title": "Encrypt Sensitive Data at Rest"
+        },
+        "nist_csf_2": {
+          "control": "PR.DS-01",
+          "title": "The confidentiality, integrity, and availability of data-at-rest are protected"
+        },
+        "pci_dss_v4": {
+          "control": "3.5.1",
+          "title": "Primary account number (PAN) is rendered unreadable anywhere it is stored"
+        }
+      }
+    },
+    {
+      "control_id": "LOG-001",
+      "reference_only": true,
+      "label": "(reference only, not a certification)",
+      "mapped": true,
+      "description": "Centralized audit logging (LOG-001)",
+      "frameworks": {
+        "cis_v8": {
+          "control": "8.5",
+          "title": "Collect Detailed Audit Logs"
+        },
+        "nist_csf_2": {
+          "control": "PR.PS-04",
+          "title": "Log records are generated and made available for continuous monitoring"
+        },
+        "pci_dss_v4": {
+          "control": "10.2.1",
+          "title": "Audit logs are enabled and active for all system components and cardholder data"
+        }
+      }
+    },
+    {
+      "control_id": "DRIFT-001",
+      "reference_only": true,
+      "label": "(reference only, not a certification)",
+      "mapped": true,
+      "description": "An asset appeared in, or disappeared from, the live environment with no corresponding baseline change (DRIFT-ASSET-ADDED-01 / DRIFT-ASSET-REMOVED-01 in agent/drift.py, Phase 7). No equivalent design-time control exists in threat_engine.py or k8s_engine.py for this \u2014 it's specific to comparing two snapshots over time, not inspecting one \u2014 so this is the one control_id in this file that isn't reused from an earlier phase.",
+      "frameworks": {
+        "cis_v8": {
+          "control": "1.1",
+          "title": "Establish and Maintain Detailed Enterprise Asset Inventory"
+        },
+        "nist_csf_2": {
+          "control": "DE.CM-09",
+          "title": "Computing hardware and software, runtime environments, and their data are monitored to find potentially adverse events"
+        },
+        "pci_dss_v4": {
+          "control": "12.5.2",
+          "title": "PCI DSS scope is documented and confirmed to be accurate, with inventory of system components updated as part of that process"
+        }
+      }
+    },
+    {
+      "control_id": "ZT-001",
+      "reference_only": true,
+      "label": "(reference only, not a certification)",
+      "mapped": true,
+      "description": "Application-layer authentication / mutual TLS between services (AUTHN-FLOW-01)",
+      "frameworks": {
+        "cis_v8": {
+          "control": "3.10",
+          "title": "Encrypt Sensitive Data in Transit"
+        },
+        "nist_csf_2": {
+          "control": "PR.AA-03",
+          "title": "Users, services, and hardware are authenticated commensurate with the risk of the transaction"
+        },
+        "pci_dss_v4": {
+          "control": "4.2.1",
+          "title": "Strong cryptography and security protocols are implemented to safeguard PAN during transmission"
+        }
+      }
+    }
+  ]
+}

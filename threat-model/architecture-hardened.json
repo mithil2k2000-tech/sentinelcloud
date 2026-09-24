@@ -1,0 +1,180 @@
+{
+  "name": "Mobile Banking App \u2014 as implemented in terraform/azure (Phase 1 scaffold)",
+  "assets": [
+    {
+      "id": "mobile-app",
+      "type": "client",
+      "subnet": "internet",
+      "sensitivity": "low",
+      "internet_facing": true
+    },
+    {
+      "id": "api-gateway",
+      "type": "gateway",
+      "subnet": "gateway",
+      "sensitivity": "medium",
+      "internet_facing": true,
+      "waf_enabled": false
+    },
+    {
+      "id": "payment-service",
+      "type": "compute",
+      "subnet": "aks",
+      "sensitivity": "high"
+    },
+    {
+      "id": "account-service",
+      "type": "compute",
+      "subnet": "aks",
+      "sensitivity": "high"
+    },
+    {
+      "id": "notification-service",
+      "type": "compute",
+      "subnet": "aks",
+      "sensitivity": "low"
+    },
+    {
+      "id": "key-vault",
+      "type": "secret-store",
+      "subnet": "data",
+      "sensitivity": "critical",
+      "public_network_access": false,
+      "encrypted_at_rest": true
+    },
+    {
+      "id": "customer-storage",
+      "type": "storage",
+      "subnet": "data",
+      "sensitivity": "critical",
+      "public_network_access": false,
+      "allow_public_blob": false,
+      "encrypted_at_rest": true
+    },
+    {
+      "id": "log-workspace",
+      "type": "logging",
+      "subnet": "mgmt",
+      "sensitivity": "medium",
+      "public_network_access": false,
+      "encrypted_at_rest": true
+    }
+  ],
+  "trust_boundaries": [
+    {
+      "id": "internet",
+      "contains": [
+        "mobile-app"
+      ]
+    },
+    {
+      "id": "gateway",
+      "contains": [
+        "api-gateway"
+      ]
+    },
+    {
+      "id": "aks",
+      "contains": [
+        "payment-service",
+        "account-service",
+        "notification-service"
+      ]
+    },
+    {
+      "id": "data",
+      "contains": [
+        "key-vault",
+        "customer-storage"
+      ]
+    },
+    {
+      "id": "mgmt",
+      "contains": [
+        "log-workspace"
+      ]
+    }
+  ],
+  "flows": [
+    {
+      "from": "mobile-app",
+      "to": "api-gateway",
+      "protocol": "https",
+      "port": 443,
+      "authenticated": true
+    },
+    {
+      "from": "api-gateway",
+      "to": "payment-service",
+      "protocol": "https",
+      "port": 443,
+      "authenticated": true
+    },
+    {
+      "from": "api-gateway",
+      "to": "account-service",
+      "protocol": "https",
+      "port": 443,
+      "authenticated": true
+    },
+    {
+      "from": "api-gateway",
+      "to": "notification-service",
+      "protocol": "https",
+      "port": 443,
+      "authenticated": true
+    },
+    {
+      "from": "payment-service",
+      "to": "key-vault",
+      "protocol": "https",
+      "port": 443,
+      "authenticated": true
+    },
+    {
+      "from": "payment-service",
+      "to": "customer-storage",
+      "protocol": "https",
+      "port": 443,
+      "authenticated": true
+    },
+    {
+      "from": "account-service",
+      "to": "key-vault",
+      "protocol": "https",
+      "port": 443,
+      "authenticated": true
+    }
+  ],
+  "identity_bindings": [
+    {
+      "principal": "payment-service",
+      "role": "IAM-004-payment-service-data-access",
+      "scope": "resource-group"
+    },
+    {
+      "principal": "account-service",
+      "role": "IAM-004-account-service-secrets-access",
+      "scope": "resource"
+    },
+    {
+      "principal": "notification-service",
+      "role": null,
+      "scope": null
+    }
+  ],
+  "logging": {
+    "enabled": true,
+    "destination": "log-workspace",
+    "retention_days": 90,
+    "local_query_enabled": true
+  },
+  "_notes": [
+    "NSGs restrict the data subnet to inbound-443-from-aks-subnet only (see modules/network) \u2014 modeled here as the trust-boundary separation itself, since this schema doesn't yet carry per-boundary firewall rules.",
+    "api-gateway -> service flows are network-reachable per the NSG rules but have no application-layer authentication (no mTLS/service mesh) \u2014 Phase 4 Zero Trust work covers this.",
+    "payment-service role scope is 'resource-group' because modules/iam's payments_db_scope currently points at the resource group (no database resource exists yet in this Terraform) \u2014 narrow this once the actual data resource is provisioned.",
+    "notification-service has no role assignment in modules/iam \u2014 it touches no sensitive data (no outgoing flow), so IAM-MISSING-01 correctly doesn't flag it; not fixed because nothing requires fixing.",
+    "Phase 9: modules/logging now wires a Log Analytics workspace (log-workspace, in the mgmt boundary) with diagnostic settings from AKS, Key Vault and Storage \u2014 closes RR-01. Blob-service-level (StorageRead/Write/Delete) diagnostic logs are a documented follow-up, not yet wired (see docs/phase9-siem-detection.md).",
+    "Phase 4 (Zero Trust, RR-02/RR-04): account-service now has its own role, scoped to the Key Vault resource (modules/iam) \u2014 closes RR-02. api-gateway -> service traffic is now mutually authenticated via a mesh-wide STRICT Istio PeerAuthentication (modules/mesh) \u2014 closes RR-04. (RR-03, account-service -> secrets, was never open on Azure specifically \u2014 that flow was already authenticated:true here; only GCP/AWS had it false.) See docs/phase4-zero-trust.md."
+  ]
+}

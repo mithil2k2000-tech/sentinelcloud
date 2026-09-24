@@ -1,0 +1,29 @@
+# Fixed: a namespaced Role scoped to exactly what payment-service needs
+# (read its own ConfigMaps/Secrets), not a cluster-wide wildcard. Mirrors
+# the same "least privilege, scoped to the specific resource" principle
+# Terraform's modules/iam already applies at the cloud-IAM layer — this
+# is that same principle applied at the Kubernetes RBAC layer.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: payment-service-role
+  namespace: app
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps", "secrets"]
+    resourceNames: ["payment-service-config", "payment-service-secrets"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: payment-service-binding
+  namespace: app
+subjects:
+  - kind: ServiceAccount
+    name: payment-service
+    namespace: app
+roleRef:
+  kind: Role
+  name: payment-service-role
+  apiGroup: rbac.authorization.k8s.io

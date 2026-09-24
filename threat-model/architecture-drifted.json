@@ -1,0 +1,44 @@
+{
+  "name": "Mobile Banking App — SIMULATED current/observed state (Phase 7 drift-detection demo fixture, diverges from architecture-hardened.json on purpose)",
+  "assets": [
+    { "id": "mobile-app", "type": "client", "subnet": "internet", "sensitivity": "low", "internet_facing": true },
+    { "id": "api-gateway", "type": "gateway", "subnet": "gateway", "sensitivity": "medium", "internet_facing": true, "waf_enabled": false },
+    { "id": "payment-service", "type": "compute", "subnet": "aks", "sensitivity": "high" },
+    { "id": "account-service", "type": "compute", "subnet": "aks", "sensitivity": "high" },
+    { "id": "key-vault", "type": "secret-store", "subnet": "data", "sensitivity": "critical", "public_network_access": false, "encrypted_at_rest": false },
+    { "id": "customer-storage", "type": "storage", "subnet": "data", "sensitivity": "critical", "public_network_access": true, "allow_public_blob": false, "encrypted_at_rest": true },
+    { "id": "log-workspace", "type": "logging", "subnet": "mgmt", "sensitivity": "medium", "public_network_access": false, "encrypted_at_rest": true },
+    { "id": "debug-endpoint", "type": "api", "subnet": "aks", "sensitivity": "medium", "internet_facing": true }
+  ],
+  "trust_boundaries": [
+    { "id": "internet", "contains": ["mobile-app"] },
+    { "id": "gateway", "contains": ["api-gateway"] },
+    { "id": "aks", "contains": ["payment-service", "account-service"] },
+    { "id": "data", "contains": ["key-vault", "customer-storage"] },
+    { "id": "mgmt", "contains": ["log-workspace"] }
+  ],
+  "flows": [
+    { "from": "mobile-app", "to": "api-gateway", "protocol": "https", "port": 443, "authenticated": true },
+    { "from": "api-gateway", "to": "payment-service", "protocol": "https", "port": 443, "authenticated": true },
+    { "from": "api-gateway", "to": "account-service", "protocol": "https", "port": 443, "authenticated": false },
+    { "from": "payment-service", "to": "key-vault", "protocol": "https", "port": 443, "authenticated": true },
+    { "from": "payment-service", "to": "customer-storage", "protocol": "https", "port": 443, "authenticated": true },
+    { "from": "account-service", "to": "key-vault", "protocol": "https", "port": 443, "authenticated": true }
+  ],
+  "identity_bindings": [
+    { "principal": "payment-service", "role": "IAM-004-payment-service-data-access", "scope": "resource-group" },
+    { "principal": "account-service", "role": "Owner", "scope": "subscription" }
+  ],
+  "logging": { "enabled": false, "destination": "log-workspace" },
+  "_notes": [
+    "This is a hand-authored SIMULATED snapshot for Phase 7's drift detector demo, not a real cloud read-back (no cloud account exists in this build environment — see drift.py's module docstring and docs/drift-detection.md). It represents 'what a live API read-back might show' some time after architecture-hardened.json was the reviewed baseline, with seven deliberate, realistic deltas for agent/drift.py's 8 rules to catch:",
+    "1) customer-storage.public_network_access flipped false -> true (rule_public_access_drift, CRITICAL).",
+    "2) key-vault.encrypted_at_rest flipped true -> false (rule_encryption_drift, HIGH).",
+    "3) logging.enabled flipped true -> false (rule_logging_disabled_drift, HIGH).",
+    "4) account-service's identity binding broadened from a resource-scoped custom role to Owner/subscription (rule_identity_binding_drift, CRITICAL).",
+    "5) The api-gateway -> account-service flow's authenticated flag flipped true -> false (rule_flow_authentication_drift, MEDIUM — account-service is 'high', not 'critical', sensitivity).",
+    "6) A new asset, debug-endpoint, appears with no baseline counterpart (rule_asset_added, HIGH — it's internet-facing).",
+    "7) notification-service is gone entirely — removed from assets, trust_boundaries, its one flow, and its identity binding (rule_asset_removed, MEDIUM). This is also the fixture's proof that 'no error means no drift' would be wrong here: a diff that only walked current's keys would silently miss this asset's disappearance.",
+    "rule_waf_drift does NOT fire here on purpose: api-gateway.waf_enabled was already false in the baseline (RR-05, a known pre-existing gap, not something that can 'drift' further)."
+  ]
+}

@@ -1,0 +1,148 @@
+{
+  "architecture": "Mobile Banking App \u2014 as implemented in terraform/azure (Phase 1 scaffold)",
+  "as_of": "2026-09-18",
+  "reference_only": true,
+  "label": "(reference only, not a certification)",
+  "controls_in_scope": 6,
+  "controls_total_mapped": 15,
+  "rows": [
+    {
+      "control_id": "DATA-002",
+      "status": "PASS",
+      "description": "Encryption at rest for sensitive data stores (DATA-ENC-01)",
+      "frameworks": {
+        "cis_v8": {
+          "control": "3.11",
+          "title": "Encrypt Sensitive Data at Rest"
+        },
+        "nist_csf_2": {
+          "control": "PR.DS-01",
+          "title": "The confidentiality, integrity, and availability of data-at-rest are protected"
+        },
+        "pci_dss_v4": {
+          "control": "3.5.1",
+          "title": "Primary account number (PAN) is rendered unreadable anywhere it is stored"
+        }
+      },
+      "findings": []
+    },
+    {
+      "control_id": "IAM-004",
+      "status": "FAIL",
+      "description": "Least-privilege identity scoping and network segmentation (reused by IAM-BROAD-01/02, IAM-MISSING-01, and NET-SEGMENT-01 in threat_engine.py \u2014 see the note on shared control_ids below)",
+      "frameworks": {
+        "cis_v8": {
+          "control": "6.8",
+          "title": "Define and Maintain Role-Based Access Control"
+        },
+        "nist_csf_2": {
+          "control": "PR.AA-05",
+          "title": "Access permissions, entitlements, and authorizations are defined in a policy, managed, enforced, and reviewed, and incorporate the principles of least privilege and separation of duties"
+        },
+        "pci_dss_v4": {
+          "control": "7.2.1",
+          "title": "An access control model is defined and includes appropriate assignment of privileges based on job classification and function, least privileges, and need to know"
+        }
+      },
+      "findings": [
+        {
+          "rule_id": "IAM-BROAD-02",
+          "title": "payment-service role scoped to resource group, not a specific resource",
+          "severity": "MEDIUM",
+          "assets": [
+            "payment-service"
+          ]
+        }
+      ]
+    },
+    {
+      "control_id": "LOG-001",
+      "status": "PASS",
+      "description": "Centralized audit logging (LOG-001)",
+      "frameworks": {
+        "cis_v8": {
+          "control": "8.5",
+          "title": "Collect Detailed Audit Logs"
+        },
+        "nist_csf_2": {
+          "control": "PR.PS-04",
+          "title": "Log records are generated and made available for continuous monitoring"
+        },
+        "pci_dss_v4": {
+          "control": "10.2.1",
+          "title": "Audit logs are enabled and active for all system components and cardholder data"
+        }
+      },
+      "findings": []
+    },
+    {
+      "control_id": "NET-001",
+      "status": "PASS",
+      "description": "No public network exposure of a sensitive resource (NET-PUBLIC-01/02)",
+      "frameworks": {
+        "cis_v8": {
+          "control": "12.2",
+          "title": "Establish and Maintain a Secure Network Architecture"
+        },
+        "nist_csf_2": {
+          "control": "PR.IR-01",
+          "title": "Networks and environments are protected from unauthorized logical access and usage"
+        },
+        "pci_dss_v4": {
+          "control": "1.4.1",
+          "title": "Network Security Controls between trusted and untrusted networks are implemented"
+        }
+      },
+      "findings": []
+    },
+    {
+      "control_id": "NET-003",
+      "status": "FAIL",
+      "description": "WAF / rate-limiting in front of an internet-facing gateway (NET-WAF-01)",
+      "frameworks": {
+        "cis_v8": {
+          "control": "13.10",
+          "title": "Perform Application Layer Filtering"
+        },
+        "nist_csf_2": {
+          "control": "PR.IR-01",
+          "title": "Networks and environments are protected from unauthorized logical access and usage"
+        },
+        "pci_dss_v4": {
+          "control": "6.4.2",
+          "title": "An automated technical solution (e.g. a WAF) is deployed to detect and prevent web-based attacks"
+        }
+      },
+      "findings": [
+        {
+          "rule_id": "NET-WAF-01",
+          "title": "api-gateway has no WAF/rate-limiting in front of it",
+          "severity": "MEDIUM",
+          "assets": [
+            "api-gateway"
+          ]
+        }
+      ]
+    },
+    {
+      "control_id": "ZT-001",
+      "status": "PASS",
+      "description": "Application-layer authentication / mutual TLS between services (AUTHN-FLOW-01)",
+      "frameworks": {
+        "cis_v8": {
+          "control": "3.10",
+          "title": "Encrypt Sensitive Data in Transit"
+        },
+        "nist_csf_2": {
+          "control": "PR.AA-03",
+          "title": "Users, services, and hardware are authenticated commensurate with the risk of the transaction"
+        },
+        "pci_dss_v4": {
+          "control": "4.2.1",
+          "title": "Strong cryptography and security protocols are implemented to safeguard PAN during transmission"
+        }
+      },
+      "findings": []
+    }
+  ]
+}

@@ -1,0 +1,711 @@
+name: security-gate
+
+# Thirteen independent checks:
+#   1. unit-tests — the pytest suite (tests/) for the deterministic threat,
+#      detection, Kubernetes, and drift-detection engines, the
+#      explain.py/triage.py fallbacks (SR-4a decision-neutrality, both
+#      layers), the analyze.py/detect.py/k8s_scan.py/drift_scan.py
+#      CLI/aggregation logic, agent/compliance.py's framework-mapping
+#      lookup and reference-only labeling (FR-8/SR-6 — see
+#      docs/compliance-mapping.md), agent/report_compliance.py's
+#      audit-style report (a snapshot test against a committed real report
+#      — see docs/compliance-audit-report.md), logging/log_store.py's local
+#      log-aggregation simulation and detect.py's --store flag (see
+#      docs/centralized-logging.md), and the real Kubernetes-manifest
+#      schema validation (FR-10 gap closure — see docs/phase5-kubernetes.md).
+#      Runs first and fastest: no point spending time on Terraform
+#      validation or a threat-model run if the engines themselves are
+#      broken.
+#   2. terraform-validate — EACH of the three clouds' Terraform is
+#      syntactically and schema-correct (this repo's sandbox couldn't reach
+#      releases.hashicorp.com to run this locally — this workflow is its
+#      first real validation, for all three clouds, not just Azure).
+#   3. opa-policy-test — the centralized, cloud-agnostic policy layer
+#      (policy/opa/*.rego, v1 spec §12 Layer B) has its own `opa test`
+#      suite, independent of any one cloud's native policy engine.
+#   4. threat-model-gate — the Phase 3 agent (agent/analyze.py) runs
+#      against EACH of the three clouds' hardened architectures (Azure,
+#      GCP, AWS) and blocks the build on anything at or above the
+#      configured severity threshold. See docs/ci-cd.md for the threshold's
+#      history (CRITICAL, then tightened to HIGH once Phase 9 closed
+#      RR-01, and again once Phase 4 closed RR-02/RR-03/RR-04 — it's HIGH
+#      today, and all three clouds pass it).
+#   5. k8s-manifest-gate — Phase 5's agent/k8s_scan.py runs against
+#      kubernetes/manifests/hardened (the manifest set this project would
+#      actually deploy) and blocks the build the same way threat-model-gate
+#      does for the cloud architectures. kubernetes/manifests/vulnerable is
+#      deliberately NOT run here — it's a demonstration/test fixture (see
+#      tests/test_k8s_engine.py), never something this pipeline would
+#      treat as a real deploy candidate.
+#   6. detection-engine-demo — Phase 9's agent/detect.py runs against the
+#      synthetic multi-stage-incident log fixture and posts the report to
+#      the job summary. Deliberately NOT a gate (see agent/detect.py's own
+#      header comment for why detection is a different, retrospective
+#      question from the pre-deploy question analyze.py/k8s_scan.py
+#      answer) — this job always exits 0 and exists purely so the
+#      detection layer's output is visible on every run, not just when a
+#      developer runs it locally.
+#   7. drift-detection-demo — Phase 7's agent/drift_scan.py runs against a
+#      fixed baseline/drifted architecture-JSON snapshot pair and posts the
+#      report to the job summary. Deliberately NOT a gate — this sandbox
+#      has no live cloud account to read a real "current" state from (see
+#      agent/drift.py's own module docstring, SIMULATED mode), so this job
+#      is comparing two fixed fixtures on every run, not re-checking a real
+#      environment; gating CI on that would prove nothing. Always exits 0.
+#   8. compliance-audit-report — Phase 8's agent/report_compliance.py runs
+#      against the hardened Azure baseline and posts the rendered
+#      audit-style Markdown report straight to the job summary. Also
+#      deliberately NOT a gate: it's a re-presentation of
+#      threat-model-gate's own findings as a per-framework PASS/FAIL
+#      checklist (SR-6, reference only), not a new source of findings or a
+#      new decision — the real BLOCKED/ALLOWED call stays with
+#      threat-model-gate alone. Always exits 0.
+#   9. centralized-logging-demo — spec §16 table item 9's
+#      logging/log_store.py ingests the multi-stage-incident log fixture
+#      into a fresh local SQLite store and runs one demonstration query
+#      against it, posting both to the job summary. Deliberately NOT a
+#      gate — this module never makes a security decision at all (no
+#      Finding/Alert/BLOCKED/INCIDENT concept exists here); it only proves
+#      that a captured event is queryable after the fact. Always exits 0.
+#  10. agent-eval-benchmark — spec §16 table item 10's
+#      agent/eval/benchmark.py scores every AI-assisted narration
+#      (explain.py/triage.py) against a documented pass-rate threshold
+#      over a fixed, real-engine-derived fixture set (38 items). UNLIKE
+#      jobs 6-9 above, this job's exit code genuinely reflects its result
+#      (pass_rate below threshold -> job fails) — but it has no
+#      needs:/dependency relationship with threat-model-gate or
+#      k8s-manifest-gate in either direction, so a failing eval run can
+#      never affect a deployment decision (SR-4a). It flags a human that
+#      the AI explanation layer regressed; nothing more. See
+#      docs/agent-eval-harness.md.
+#  11. demo-walkthrough — spec §16 table item 11's five demo/scenario*.py
+#      scripts (spec §19) are run via demo/run_all.py and the full,
+#      narrated output is posted to the job summary. Deliberately NOT a
+#      second correctness gate: tests/test_demo_scenarios.py already lives
+#      under tests/ and runs as part of job 1 (unit-tests), so a real demo
+#      regression already fails the build there. This job's job is
+#      visibility, not enforcement — the scenarios are written to be
+#      "shown to an interviewer/hiring panel" (§19's own framing), so
+#      every CI run leaves a readable, narrated walkthrough on the job
+#      summary tab, not just a pass/fail dot. Always exits 0. See
+#      docs/demo-scenarios.md.
+#  12. attack-simulation-demo — agent/attack_sim.py walks architecture.json's
+#      own flow graph from every true entry point to every sensitive-data
+#      asset and posts the reachability report to the job summary for both
+#      the naive proposal and the hardened Azure baseline. Deliberately NOT
+#      a gate: feasibility is derived entirely from the same `authenticated`
+#      field threat_engine.py's own rules already read, so gating on it
+#      would be a second, redundant judgment over the same underlying facts
+#      (the same reasoning report_compliance.py's own docstring gives for
+#      staying non-gating). This is a read-only graph walk, never a live
+#      probe or exploit attempt — see agent/attack_sim.py's module
+#      docstring. Always exits 0. See docs/attack-simulation.md.
+#  13. dashboard-demo — agent/dashboard.py regenerates every other report
+#      this workflow produces (threat-model x3, Kubernetes manifest gate,
+#      compliance audit, drift demo, detection demo, attack simulation x2,
+#      agent-eval harness) inside its own job — GitHub Actions jobs don't
+#      share a filesystem, so this is a self-contained re-run, not a
+#      dependency on another job's output — then renders them onto one
+#      HTML page and posts the plain-text summary to the job summary.
+#      Deliberately NOT a gate and NOT a live dashboard: every number is
+#      copied verbatim from a report another, already-tested CLI already
+#      produced — this job contributes no new judgment (see
+#      agent/dashboard.py's module docstring). Always exits 0. See
+#      docs/dashboard.md.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "terraform/**"
+      - "threat-model/**"
+      - "kubernetes/**"
+      - "agent/**"
+      - "logging/**"
+      - "demo/**"
+      - "tests/**"
+      - "policy/**"
+      - ".github/workflows/security-gate.yml"
+  pull_request:
+    paths:
+      - "terraform/**"
+      - "threat-model/**"
+      - "kubernetes/**"
+      - "agent/**"
+      - "logging/**"
+      - "demo/**"
+      - "tests/**"
+      - "policy/**"
+      - ".github/workflows/security-gate.yml"
+  workflow_dispatch: {}
+
+jobs:
+  unit-tests:
+    name: Agent unit tests (pytest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install test dependencies
+        run: pip install pytest pyyaml kubernetes-validate
+
+      - name: Run the pytest suite
+        run: python3 -m pytest tests/ -v
+
+  terraform-validate:
+    name: Terraform validate (${{ matrix.cloud }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        cloud: [azure, gcp, aws]
+    defaults:
+      run:
+        working-directory: terraform/${{ matrix.cloud }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.8"
+
+      - name: terraform fmt -check
+        run: terraform fmt -check -recursive
+
+      - name: terraform init (no backend — schema/syntax check only)
+        run: terraform init -backend=false
+
+      - name: terraform validate
+        run: terraform validate
+
+  opa-policy-test:
+    name: OPA policy tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: open-policy-agent/setup-opa@v2
+        with:
+          version: latest
+
+      - name: opa test (centralized policy layer)
+        run: opa test policy/opa -v
+
+  threat-model-gate:
+    name: Threat model gate (${{ matrix.cloud }})
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - cloud: azure
+            architecture: architecture-hardened.json
+            report: report-hardened.json
+          - cloud: gcp
+            architecture: architecture-hardened-gcp.json
+            report: report-hardened-gcp.json
+          - cloud: aws
+            architecture: architecture-hardened-aws.json
+            report: report-hardened-aws.json
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run threat-modeling agent against ${{ matrix.cloud }}'s architecture
+        id: analyze
+        working-directory: agent
+        # ANTHROPIC_API_KEY is optional — if it's not set as a repo secret,
+        # explain.py falls back to its deterministic template and the
+        # block/allow decision is unaffected either way.
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          python3 analyze.py ../threat-model/${{ matrix.architecture }} \
+            --fail-on HIGH \
+            --json ../threat-model/${{ matrix.report }} \
+            | tee report.txt
+
+      - name: Write job summary
+        if: always()
+        run: |
+          {
+            echo "## Threat model report — ${{ matrix.cloud }}"
+            echo '```'
+            cat agent/report.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload full report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: threat-model-report-${{ matrix.cloud }}
+          path: |
+            threat-model/${{ matrix.report }}
+            agent/report.txt
+
+  k8s-manifest-gate:
+    name: Kubernetes manifest gate
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install engine dependencies
+        run: pip install pyyaml
+
+      - name: Run k8s manifest engine against the hardened manifest set
+        id: k8s_scan
+        working-directory: agent
+        # Same optional-key pattern as analyze.py — without
+        # ANTHROPIC_API_KEY, explain.py falls back to its deterministic
+        # template and the block/allow decision is unaffected either way.
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          python3 k8s_scan.py ../kubernetes/manifests/hardened \
+            --fail-on HIGH \
+            --json ../kubernetes/manifests/report-hardened.json \
+            | tee k8s-report.txt
+
+      - name: Write job summary
+        if: always()
+        run: |
+          {
+            echo "## Kubernetes manifest gate — hardened manifest set"
+            echo '```'
+            cat agent/k8s-report.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload full report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: k8s-manifest-report
+          path: |
+            kubernetes/manifests/report-hardened.json
+            agent/k8s-report.txt
+
+  detection-engine-demo:
+    name: Detection engine demo (non-gating)
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run detection agent against the synthetic multi-stage-incident log fixture
+        working-directory: agent
+        # Same optional-key pattern as analyze.py/explain.py: without
+        # ANTHROPIC_API_KEY, triage.py falls back to its deterministic
+        # template — the alerts and the INCIDENT/CLEAR decision are
+        # identical either way (see tests/test_triage_fallback.py).
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          python3 detect.py ../threat-model/logs/logs-multi-stage-incident.json \
+            --triage \
+            --json ../threat-model/report-detection-demo.json \
+            | tee detect-report.txt
+          # Informational only — see this job's own name/header comment
+          # for why detection is never wired into the deployment gate.
+          exit 0
+
+      - name: Write job summary
+        if: always()
+        run: |
+          {
+            echo "## Detection engine demo — synthetic multi-stage incident"
+            echo "Not a gate — see agent/detect.py's header comment for why."
+            echo '```'
+            cat agent/detect-report.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload full report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: detection-engine-demo-report
+          path: |
+            threat-model/report-detection-demo.json
+            agent/detect-report.txt
+
+  drift-detection-demo:
+    name: Drift detection demo (non-gating)
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run drift detector against the baseline/drifted demo fixture pair
+        working-directory: agent
+        # Same optional-key pattern as the other three CLIs: without
+        # ANTHROPIC_API_KEY, explain.py falls back to its deterministic
+        # template — the findings and BLOCKED/ALLOWED decision are
+        # identical either way.
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          python3 drift_scan.py ../threat-model/architecture-hardened.json \
+            ../threat-model/architecture-drifted.json \
+            --compliance \
+            --json ../threat-model/report-drift-demo.json \
+            | tee drift-report.txt
+          # Informational only, deliberately non-gating: this is a fixed
+          # DEMO fixture (architecture-drifted.json), not a real live-vs-
+          # baseline comparison re-run on every commit — this sandbox has
+          # no cloud account to read real "current" state from (see
+          # agent/drift.py's own module docstring, SIMULATED mode). Gating
+          # CI on a static fixture would just be gating on nothing ever
+          # changing, which proves nothing about a real deployment.
+          exit 0
+
+      - name: Write job summary
+        if: always()
+        run: |
+          {
+            echo "## Drift detection demo — baseline vs. simulated drifted snapshot"
+            echo "Not a gate — see agent/drift.py's module docstring for why (SIMULATED mode, fixed demo fixture, no live cloud account in this sandbox)."
+            echo '```'
+            cat agent/drift-report.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload full report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: drift-detection-demo-report
+          path: |
+            threat-model/report-drift-demo.json
+            agent/drift-report.txt
+
+  compliance-audit-report:
+    name: Compliance audit-style report (non-gating)
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install pyyaml
+
+      - name: Render the audit-style report against the hardened Azure baseline
+        working-directory: agent
+        run: |
+          python3 report_compliance.py ../threat-model/architecture-hardened.json \
+            --as-of "$(date -u +%Y-%m-%d)" \
+            --json ../threat-model/report-compliance-audit.json \
+            --out compliance-audit-report.md
+          # Always 0 — a report generator, not a gate. See
+          # report_compliance.py's own module docstring for why: the real
+          # BLOCKED/ALLOWED decision belongs to threat-model-gate alone.
+          exit 0
+
+      - name: Write job summary
+        if: always()
+        run: |
+          {
+            echo "## Compliance audit-style report — hardened Azure baseline"
+            echo "Not a gate — reference only, not a certification (SR-6). See docs/compliance-audit-report.md."
+            cat agent/compliance-audit-report.md
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload full report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: compliance-audit-report
+          path: |
+            threat-model/report-compliance-audit.json
+            agent/compliance-audit-report.md
+
+  centralized-logging-demo:
+    name: Centralized logging — local store demo (non-gating)
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Ingest a synthetic incident into the local log store and query it back
+        working-directory: logging
+        run: |
+          python3 query_cli.py /tmp/security-gate-events.sqlite \
+            --ingest ../threat-model/logs/logs-multi-stage-incident.json \
+            > ingest.txt
+          python3 query_cli.py /tmp/security-gate-events.sqlite \
+            --principal k.doran --event-type iam_change \
+            --json ../threat-model/logging-demo-query.json \
+            > query.txt
+          # Always 0 — this module never makes a security decision (no
+          # Finding/Alert/BLOCKED/INCIDENT concept exists here at all). See
+          # logging/log_store.py's own module docstring and
+          # docs/centralized-logging.md.
+          exit 0
+
+      - name: Write job summary
+        if: always()
+        run: |
+          {
+            echo "## Centralized logging — local store demo"
+            echo "Not a gate — this module never makes a security decision. See docs/centralized-logging.md."
+            echo '```'
+            cat logging/ingest.txt
+            echo
+            echo "Query: --principal k.doran --event-type iam_change"
+            cat logging/query.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload query result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: centralized-logging-demo
+          path: threat-model/logging-demo-query.json
+
+  agent-eval-benchmark:
+    name: Agent evaluation harness (AI-narration benchmark)
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run the benchmark against the real, engine-derived fixture set
+        id: benchmark
+        working-directory: agent/eval
+        run: |
+          # This step's own exit code IS the benchmark's real result
+          # (benchmark.py exits 1 when pass_rate < threshold) — no
+          # continue-on-error here, unlike the always-exit-0 demo jobs.
+          # See the header comment above (check 10) and
+          # docs/agent-eval-harness.md for why that's still safe: this job
+          # has no needs:/dependency relationship with threat-model-gate
+          # or k8s-manifest-gate, so it can never block a deployment.
+          python3 benchmark.py --json ../../threat-model/agent-eval-result.json | tee benchmark-report.txt
+
+      - name: Write job summary
+        if: always()
+        run: |
+          {
+            echo "## Agent evaluation harness — AI-narration benchmark"
+            echo "No ANTHROPIC_API_KEY is set in CI, so this run scores the deterministic"
+            echo "template fallback (a harness regression check), not a real LLM call — see"
+            echo "docs/agent-eval-harness.md. This job's own result CAN fail, unlike the"
+            echo "other demo jobs above, but it has no dependency relationship with"
+            echo "threat-model-gate/k8s-manifest-gate in either direction (SR-4a): a failing"
+            echo "eval run flags a human, it never blocks a deployment."
+            echo '```'
+            cat agent/eval/benchmark-report.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload full benchmark result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-eval-benchmark
+          path: |
+            threat-model/agent-eval-result.json
+            agent/eval/benchmark-report.txt
+
+  demo-walkthrough:
+    name: Demonstration scenarios walkthrough (non-gating)
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install test dependencies
+        run: pip install pytest
+
+      - name: Run all five demonstration scenarios (spec §19)
+        working-directory: demo
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          python3 run_all.py | tee walkthrough.txt
+          # Always 0 — deliberately not a second correctness gate. See this
+          # job's own header comment (check 11) and docs/demo-scenarios.md:
+          # tests/test_demo_scenarios.py already runs as part of job 1
+          # (unit-tests) and fails the build on a real demo regression.
+          # This job exists purely for visibility — the scenarios are
+          # written to be shown to an interviewer/hiring panel, so every CI
+          # run leaves the full narrated walkthrough on the job summary.
+          exit 0
+
+      - name: Write job summary
+        if: always()
+        run: |
+          {
+            echo "## Demonstration scenarios walkthrough (spec §19)"
+            echo "Not a gate — tests/test_demo_scenarios.py (run as part of the unit-tests job) already enforces this. See docs/demo-scenarios.md."
+            echo '```'
+            cat demo/walkthrough.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload full walkthrough output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: demo-walkthrough
+          path: demo/walkthrough.txt
+
+  attack-simulation-demo:
+    name: Attack path simulation (non-gating)
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run attack-path reachability analysis against the naive proposal and the hardened baseline
+        working-directory: agent
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          python3 attack_sim.py ../threat-model/architecture-proposed.json \
+            --json ../threat-model/attack-chains-proposed.json \
+            | tee attack-sim-proposed.txt
+          python3 attack_sim.py ../threat-model/architecture-hardened.json \
+            --json ../threat-model/attack-chains-hardened.json \
+            | tee attack-sim-hardened.txt
+          # Always 0 — a reachability report, not a gate. See
+          # attack_sim.py's own module docstring: feasibility is derived
+          # entirely from data threat-model-gate's own rules already read.
+          exit 0
+
+      - name: Write job summary
+        if: always()
+        run: |
+          {
+            echo "## Attack path simulation — reachability analysis (not a penetration test)"
+            echo "Not a gate — see docs/attack-simulation.md and agent/attack_sim.py's module docstring."
+            echo
+            echo "### Naive proposal (pre-review)"
+            echo '```'
+            cat agent/attack-sim-proposed.txt
+            echo '```'
+            echo
+            echo "### Hardened baseline (Azure)"
+            echo '```'
+            cat agent/attack-sim-hardened.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload full reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: attack-simulation-demo
+          path: |
+            threat-model/attack-chains-proposed.json
+            threat-model/attack-chains-hardened.json
+            agent/attack-sim-proposed.txt
+            agent/attack-sim-hardened.txt
+
+  dashboard-demo:
+    name: Security posture dashboard (non-gating)
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install pyyaml
+
+      - name: Regenerate every underlying report this job's own dashboard reads
+        working-directory: agent
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          # Each of these mirrors an earlier job's own command exactly.
+          # GitHub Actions jobs don't share a filesystem, so this job
+          # regenerates its own copies rather than depending on another
+          # job's artifacts — every report/CLI here already runs in well
+          # under a second, so the duplication costs nothing meaningful.
+          python3 analyze.py ../threat-model/architecture-hardened.json --json ../threat-model/report-hardened.json || true
+          python3 analyze.py ../threat-model/architecture-hardened-gcp.json --json ../threat-model/report-hardened-gcp.json || true
+          python3 analyze.py ../threat-model/architecture-hardened-aws.json --json ../threat-model/report-hardened-aws.json || true
+          python3 k8s_scan.py ../kubernetes/manifests/hardened --json ../kubernetes/manifests/report-hardened.json || true
+          python3 report_compliance.py ../threat-model/architecture-hardened.json --as-of "$(date -u +%Y-%m-%d)" --json ../threat-model/report-compliance-audit.json --out /tmp/compliance-audit-report.md || true
+          python3 drift_scan.py ../threat-model/architecture-hardened.json ../threat-model/architecture-drifted.json --json ../threat-model/report-drift-demo.json || true
+          python3 detect.py ../threat-model/logs/logs-multi-stage-incident.json --json ../threat-model/report-detection-demo.json || true
+          python3 attack_sim.py ../threat-model/architecture-proposed.json --no-explain --json ../threat-model/attack-chains-proposed.json > /dev/null || true
+          python3 attack_sim.py ../threat-model/architecture-hardened.json --no-explain --json ../threat-model/attack-chains-hardened.json > /dev/null || true
+          (cd eval && python3 benchmark.py --json ../../threat-model/agent-eval-result.json) || true
+
+      - name: Render the dashboard
+        working-directory: agent
+        run: |
+          python3 dashboard.py --out ../threat-model/dashboard.html | tee dashboard-summary.txt
+          # Always 0 — a rendering layer, not a gate. See dashboard.py's
+          # own module docstring: every number on the page is copied from
+          # a report another, already-tested CLI already produced.
+          exit 0
+
+      - name: Write job summary
+        if: always()
+        run: |
+          {
+            echo "Not a gate, not a live dashboard — see docs/dashboard.md and agent/dashboard.py's module docstring. Every number below is copied from a report another job in this workflow already produces."
+            echo '```'
+            cat agent/dashboard-summary.txt
+            echo '```'
+            echo
+            echo "Full interactive page: see the dashboard-demo artifact on this run."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload full dashboard
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashboard-demo
+          path: |
+            threat-model/dashboard.html
+            agent/dashboard-summary.txt

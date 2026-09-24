@@ -1,0 +1,43 @@
+# Deliberately vulnerable — shares the host's network and PID namespace
+# (a compromised container can sniff/inject on the node's real network
+# interface and see every other process on the node, not just its own),
+# and adds a dangerous capability instead of dropping the default set.
+# See docs/phase5-kubernetes.md.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: account-service
+  namespace: app
+  labels:
+    app: account-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: account-service
+  template:
+    metadata:
+      labels:
+        app: account-service
+    spec:
+      serviceAccountName: account-service
+      hostNetwork: true
+      hostPID: true
+      containers:
+        - name: account-service
+          image: meridiantrustbank/account-service:2.1.0
+          ports:
+            - containerPort: 8081
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          securityContext:
+            capabilities:
+              add: ["NET_ADMIN"]
+          env:
+            - name: SERVICE_NAME
+              value: account-service

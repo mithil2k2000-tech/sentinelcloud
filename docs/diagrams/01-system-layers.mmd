@@ -1,0 +1,28 @@
+flowchart TB
+    subgraph L1["Layer 1 — Managed Infrastructure (per cloud: Azure / GCP / AWS)"]
+        direction TB
+        TF["Terraform modules<br/>network · iam · secrets · storage · policy · mesh · logging · aks/gke/eks"]
+        RUNTIME["Runtime: API gateway → payment/account/notification-service (K8s)<br/>→ secrets store + customer storage, mesh-wide mTLS, mgmt logging"]
+        TF --> RUNTIME
+    end
+
+    subgraph L2["Layer 2 — Governance Plane (cloud-agnostic)"]
+        direction TB
+        ARCH["architecture.json<br/>(hand-authored structured description)"]
+        ENGINES["4 deterministic engines, shared Finding/Severity/Stride shape<br/>threat_engine.py · k8s_engine.py · drift.py<br/>(+ detection_engine.py, its own retrospective Alert shape)"]
+        SCORING["Optional additive layers on any finding<br/>risk_model.py (impact × likelihood) · compliance.py (framework mapping, SR-6 reference-only)"]
+        CLIS["5 CLIs — one per engine<br/>analyze.py · k8s_scan.py · drift_scan.py · detect.py · report_compliance.py"]
+        LLM["LLM narration — reads findings, never writes them<br/>explain.py · triage.py (template fallback, SR-4/SR-4a)"]
+        DECISION["BLOCKED / ALLOWED + report"]
+        GATE["CI/CD gate — GitHub Actions, 11 jobs"]
+
+        ARCH --> ENGINES --> SCORING --> CLIS
+        CLIS --> DECISION
+        LLM -.reads only.-> CLIS
+        DECISION --> GATE
+    end
+
+    L1 -- "state describes" --> ARCH
+
+    style LLM fill:#fff3cd,stroke:#997404
+    style DECISION fill:#d1e7dd,stroke:#0f5132
