@@ -33,8 +33,8 @@ variable "allowed_admin_cidrs" {
     server authorized ranges, etc). Never default this to 0.0.0.0/0 in a real
     deployment — set it explicitly per environment.
   EOT
-  type    = list(string)
-  default = []
+  type        = list(string)
+  default     = []
 }
 
 variable "tags" {

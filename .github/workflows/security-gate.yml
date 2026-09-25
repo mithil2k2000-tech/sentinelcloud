@@ -174,36 +174,22 @@ jobs:
           terraform_version: "1.9.8"
 
       - name: terraform fmt -check
-        id: fmtcheck
-        run: |
-          set +e
-          OUT=$(terraform fmt -check -diff -recursive 2>&1)
-          CODE=$?
-          if [ $CODE -ne 0 ]; then
-            ESCAPED="${OUT//'%'/'%25'}"
-            ESCAPED="${ESCAPED//$'\n'/'%0A'}"
-            ESCAPED="${ESCAPED//$'\r'/'%0D'}"
-            echo "::warning::TF_FMT_DIFF(${{ matrix.cloud }}):%0A${ESCAPED}"
-          fi
-          echo "$OUT"
-          exit 0
+        run: terraform fmt -check -recursive
 
       - name: terraform init (no backend — schema/syntax check only)
         run: terraform init -backend=false
 
+      # Two diagnostic commits made both steps above non-fatal for a couple
+      # of CI runs, surfacing their real output as check-run ::warning::
+      # annotations (reachable via api.github.com even though raw job logs
+      # and artifacts are not, from this network) so the actual terraform
+      # fmt diff and terraform validate error could be read and fixed for
+      # real instead of guessed at — see the two preceding commits and
+      # docs/ci-cd.md. Both are back to plain, blocking form here since
+      # both now pass for real against the tool that actually enforces
+      # them.
       - name: terraform validate
-        run: |
-          set +e
-          OUT=$(terraform validate -no-color 2>&1)
-          CODE=$?
-          if [ $CODE -ne 0 ]; then
-            ESCAPED="${OUT//'%'/'%25'}"
-            ESCAPED="${ESCAPED//$'\n'/'%0A'}"
-            ESCAPED="${ESCAPED//$'\r'/'%0D'}"
-            echo "::warning::TF_VALIDATE_ERROR(${{ matrix.cloud }}):%0A${ESCAPED}"
-          fi
-          echo "$OUT"
-          exit $CODE
+        run: terraform validate
 
   opa-policy-test:
     name: OPA policy tests

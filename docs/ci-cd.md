@@ -63,6 +63,28 @@ workflow itself, which doesn't change.
    Phase 9 — gets checked against actual provider schemas, not just HCL2
    syntax.
 
+   **This prediction was confirmed exactly, on the first real push
+   (2026-09-25).** `terraform fmt -check` failed on all three clouds —
+   canonical `=` alignment had drifted across 21 hand-written files
+   (python-hcl2 checks syntax, never formatting, so nothing before a real
+   `terraform fmt` had ever caught this). Fixed with a small targeted
+   script rather than a full reimplementation, corrected twice against the
+   real tool's own diff (raw job logs and artifacts are unreachable from
+   this network too — both are served from blob-storage hosts it blocks —
+   so a temporary CI change made the check non-fatal for two runs and
+   surfaced its exact output as a check-run `::warning::` annotation
+   instead, which *is* reachable via `api.github.com`). Separately,
+   `terraform validate` failed for real on Azure only:
+   `azurerm_kubernetes_cluster.this`'s `azure_active_directory_role_based_access_control`
+   block set only `azure_rbac_enabled`, but the provider schema requires
+   at least one of a further set of arguments — fixed by adding
+   `managed = true` (the modern AKS-managed Entra ID integration, not the
+   legacy `client_app_id`/`server_app_id`/`server_app_secret` flow, which
+   is also the better security posture). AWS and GCP validated cleanly on
+   the first real run. Both fixes verified independently: python-hcl2
+   still parses all 81 files with 0 failures, the full 295-test suite is
+   unaffected, and the real GitHub Actions run itself is the final proof.
+
 3. **`opa-policy-test`** (Phase 2) — `opa test policy/opa -v`, the
    centralized, cloud-agnostic policy layer (v1 spec §12 Layer B),
    independent of any one cloud's native policy engine. See

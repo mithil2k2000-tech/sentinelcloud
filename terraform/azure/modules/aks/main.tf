@@ -37,6 +37,7 @@ resource "azurerm_kubernetes_cluster" "this" {
   }
 
   azure_active_directory_role_based_access_control {
+    managed            = true # AKS-managed Entra ID integration, not the legacy client/server-app-id flow
     azure_rbac_enabled = true
   }
 
