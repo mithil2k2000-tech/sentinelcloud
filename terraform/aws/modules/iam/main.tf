@@ -32,8 +32,8 @@ resource "aws_iam_role" "payment_service" {
 
 data "aws_iam_policy_document" "payment_data_access" {
   statement {
-    sid     = "IAM004PaymentDataAccess"
-    effect  = "Allow"
+    sid    = "IAM004PaymentDataAccess"
+    effect = "Allow"
     actions = [
       "s3:GetObject",
       "s3:PutObject",
@@ -87,8 +87,8 @@ resource "aws_iam_role" "account_service" {
 
 data "aws_iam_policy_document" "account_service_secrets_access" {
   statement {
-    sid     = "IAM004AccountServiceSecretsAccess"
-    effect  = "Allow"
+    sid    = "IAM004AccountServiceSecretsAccess"
+    effect = "Allow"
     actions = [
       "secretsmanager:GetSecretValue",
       "secretsmanager:DescribeSecret",

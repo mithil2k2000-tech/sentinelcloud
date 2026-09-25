@@ -68,7 +68,7 @@ resource "azurerm_role_definition" "account_service_secrets_access" {
   description = "Least-privilege role for account-service: read secrets from key-vault only. No subscription-wide or resource-group-wide access."
 
   permissions {
-    actions      = []
+    actions = []
     data_actions = [
       "Microsoft.KeyVault/vaults/secrets/getSecret/action",
       "Microsoft.KeyVault/vaults/secrets/readMetadata/action",

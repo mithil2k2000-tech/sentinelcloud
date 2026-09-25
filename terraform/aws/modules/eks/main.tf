@@ -9,9 +9,9 @@
 #   - secrets envelope-encrypted with the module's own KMS key
 
 resource "aws_iam_role" "cluster" {
-  name               = "${var.project_name}-eks-cluster-${var.environment}"
+  name = "${var.project_name}-eks-cluster-${var.environment}"
   assume_role_policy = jsonencode({
-    Version   = "2012-10-17"
+    Version = "2012-10-17"
     Statement = [{
       Effect    = "Allow"
       Principal = { Service = "eks.amazonaws.com" }
@@ -67,9 +67,9 @@ resource "aws_iam_openid_connect_provider" "this" {
 }
 
 resource "aws_iam_role" "node_group" {
-  name               = "${var.project_name}-eks-nodegroup-${var.environment}"
+  name = "${var.project_name}-eks-nodegroup-${var.environment}"
   assume_role_policy = jsonencode({
-    Version   = "2012-10-17"
+    Version = "2012-10-17"
     Statement = [{
       Effect    = "Allow"
       Principal = { Service = "ec2.amazonaws.com" }

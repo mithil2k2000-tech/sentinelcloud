@@ -192,7 +192,18 @@ jobs:
         run: terraform init -backend=false
 
       - name: terraform validate
-        run: terraform validate
+        run: |
+          set +e
+          OUT=$(terraform validate -no-color 2>&1)
+          CODE=$?
+          if [ $CODE -ne 0 ]; then
+            ESCAPED="${OUT//'%'/'%25'}"
+            ESCAPED="${ESCAPED//$'\n'/'%0A'}"
+            ESCAPED="${ESCAPED//$'\r'/'%0D'}"
+            echo "::warning::TF_VALIDATE_ERROR(${{ matrix.cloud }}):%0A${ESCAPED}"
+          fi
+          echo "$OUT"
+          exit $CODE
 
   opa-policy-test:
     name: OPA policy tests

@@ -40,7 +40,7 @@ resource "helm_release" "istiod" {
 
 resource "kubernetes_namespace" "app" {
   metadata {
-    name   = var.app_namespace
+    name = var.app_namespace
     labels = {
       "istio-injection" = "enabled"
     }
@@ -57,7 +57,7 @@ resource "kubernetes_manifest" "mesh_wide_mtls_strict" {
   manifest = {
     apiVersion = "security.istio.io/v1beta1"
     kind       = "PeerAuthentication"
-    metadata   = {
+    metadata = {
       name      = "default"
       namespace = "istio-system"
     }

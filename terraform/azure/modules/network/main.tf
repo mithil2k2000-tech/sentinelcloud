@@ -181,8 +181,8 @@ resource "azurerm_network_security_group" "mgmt" {
 }
 
 resource "azurerm_subnet_network_security_group_association" "this" {
-  for_each                  = azurerm_subnet.this
-  subnet_id                 = each.value.id
+  for_each  = azurerm_subnet.this
+  subnet_id = each.value.id
   network_security_group_id = {
     gateway = azurerm_network_security_group.gateway.id
     aks     = azurerm_network_security_group.aks.id

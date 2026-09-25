@@ -40,7 +40,7 @@ variable "allowed_admin_cidrs" {
 variable "tags" {
   description = "Common tags applied to every resource for cost tracking and ownership."
   type        = map(string)
-  default     = {
+  default = {
     project    = "cloud-security-platform"
     managed-by = "terraform"
   }

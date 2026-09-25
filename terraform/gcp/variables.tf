@@ -30,7 +30,7 @@ variable "allowed_admin_cidrs" {
 }
 
 variable "labels" {
-  type    = map(string)
+  type = map(string)
   default = {
     project    = "cloud-security-platform"
     managed-by = "terraform"
