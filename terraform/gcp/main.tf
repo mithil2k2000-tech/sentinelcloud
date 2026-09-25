@@ -63,13 +63,13 @@ module "logging" {
 module "gke" {
   source = "./modules/gke"
 
-  project_id            = var.project_id
-  project_name          = var.project_name
-  environment           = var.environment
-  region                = var.region
-  network_name          = module.network.network_name
-  gke_subnet_self_link  = module.network.subnet_self_links["gke"]
-  authorized_cidrs      = var.allowed_admin_cidrs
+  project_id           = var.project_id
+  project_name         = var.project_name
+  environment          = var.environment
+  region               = var.region
+  network_name         = module.network.network_name
+  gke_subnet_self_link = module.network.subnet_self_links["gke"]
+  authorized_cidrs     = var.allowed_admin_cidrs
 }
 
 module "mesh" {

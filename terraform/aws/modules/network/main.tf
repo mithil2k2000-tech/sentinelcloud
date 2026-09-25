@@ -91,10 +91,10 @@ resource "aws_security_group" "eks" {
 
   ingress {
     description     = "HTTPS from the gateway security group only"
-    from_port        = 443
-    to_port          = 443
-    protocol         = "tcp"
-    security_groups  = [aws_security_group.gateway.id]
+    from_port       = 443
+    to_port         = 443
+    protocol        = "tcp"
+    security_groups = [aws_security_group.gateway.id]
   }
 
   egress {
@@ -114,10 +114,10 @@ resource "aws_security_group" "data" {
   # only the EKS security group may reach this tier.
   ingress {
     description     = "HTTPS from EKS workloads only"
-    from_port        = 443
-    to_port          = 443
-    protocol         = "tcp"
-    security_groups  = [aws_security_group.eks.id]
+    from_port       = 443
+    to_port         = 443
+    protocol        = "tcp"
+    security_groups = [aws_security_group.eks.id]
   }
 
   egress {

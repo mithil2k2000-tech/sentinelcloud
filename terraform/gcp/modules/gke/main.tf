@@ -55,9 +55,9 @@ resource "google_container_cluster" "this" {
 }
 
 resource "google_container_node_pool" "user" {
-  name     = "user-pool"
-  location = var.region
-  cluster  = google_container_cluster.this.name
+  name       = "user-pool"
+  location   = var.region
+  cluster    = google_container_cluster.this.name
   node_count = 2
 
   node_config {

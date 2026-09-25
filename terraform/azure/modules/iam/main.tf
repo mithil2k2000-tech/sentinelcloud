@@ -43,7 +43,7 @@ resource "azurerm_role_definition" "payment_data_access" {
       "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/items/create",
       "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/items/replace",
     ]
-    not_actions    = []
+    not_actions      = []
     not_data_actions = []
   }
 
@@ -68,13 +68,13 @@ resource "azurerm_role_definition" "account_service_secrets_access" {
   description = "Least-privilege role for account-service: read secrets from key-vault only. No subscription-wide or resource-group-wide access."
 
   permissions {
-    actions = []
+    actions      = []
     data_actions = [
       "Microsoft.KeyVault/vaults/secrets/getSecret/action",
       "Microsoft.KeyVault/vaults/secrets/readMetadata/action",
     ]
-    not_actions       = []
-    not_data_actions  = []
+    not_actions      = []
+    not_data_actions = []
   }
 
   assignable_scopes = [var.account_service_secrets_scope]
@@ -99,9 +99,9 @@ resource "azurerm_role_definition" "security_auditor" {
       "Microsoft.Authorization/*/read",
       "Microsoft.Resources/subscriptions/resourceGroups/read",
     ]
-    not_actions       = []
-    data_actions      = []
-    not_data_actions  = []
+    not_actions      = []
+    data_actions     = []
+    not_data_actions = []
   }
 
   assignable_scopes = [var.subscription_scope]

@@ -16,12 +16,12 @@ resource "azurerm_storage_account" "this" {
 
   account_tier             = "Standard"
   account_replication_type = "GRS"
-  min_tls_version           = "TLS1_2"
+  min_tls_version          = "TLS1_2"
 
   # No public access, no shared-key auth (RBAC/Entra ID only), no public
   # blob containers by default.
-  public_network_access_enabled  = false
-  shared_access_key_enabled      = false
+  public_network_access_enabled   = false
+  shared_access_key_enabled       = false
   allow_nested_items_to_be_public = false
 
   network_rules {

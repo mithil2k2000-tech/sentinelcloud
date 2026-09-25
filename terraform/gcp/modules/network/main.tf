@@ -33,10 +33,10 @@ locals {
 
 resource "google_compute_subnetwork" "this" {
   for_each                 = local.subnets
-  name                      = "subnet-${each.key}"
-  ip_cidr_range             = each.value.cidr
-  region                    = var.region
-  network                   = google_compute_network.this.id
+  name                     = "subnet-${each.key}"
+  ip_cidr_range            = each.value.cidr
+  region                   = var.region
+  network                  = google_compute_network.this.id
   private_ip_google_access = true
 
   dynamic "secondary_ip_range" {

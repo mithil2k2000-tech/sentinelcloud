@@ -25,10 +25,10 @@ resource "azurerm_kubernetes_cluster" "this" {
   }
 
   default_node_pool {
-    name           = "system"
-    vm_size        = "Standard_D2s_v5"
-    node_count     = 2
-    vnet_subnet_id = var.aks_subnet_id
+    name                         = "system"
+    vm_size                      = "Standard_D2s_v5"
+    node_count                   = 2
+    vnet_subnet_id               = var.aks_subnet_id
     only_critical_addons_enabled = true # system pool runs no app workloads
   }
 

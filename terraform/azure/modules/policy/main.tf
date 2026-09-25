@@ -55,7 +55,7 @@ resource "azurerm_policy_definition" "require_encryption" {
           equals = "Microsoft.Storage/storageAccounts"
         },
         {
-          field  = "Microsoft.Storage/storageAccounts/encryption.requireInfrastructureEncryption"
+          field     = "Microsoft.Storage/storageAccounts/encryption.requireInfrastructureEncryption"
           notEquals = "true"
         }
       ]

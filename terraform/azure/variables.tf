@@ -33,15 +33,15 @@ variable "allowed_admin_cidrs" {
     server authorized ranges, etc). Never default this to 0.0.0.0/0 in a real
     deployment — set it explicitly per environment.
   EOT
-  type        = list(string)
-  default     = []
+  type    = list(string)
+  default = []
 }
 
 variable "tags" {
   description = "Common tags applied to every resource for cost tracking and ownership."
   type        = map(string)
-  default = {
-    project = "cloud-security-platform"
+  default     = {
+    project    = "cloud-security-platform"
     managed-by = "terraform"
   }
 }
